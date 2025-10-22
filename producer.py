@@ -1,26 +1,28 @@
 from confluent_kafka import Producer
+import time
 
-# Local broker
+# Kafka broker configuration
 conf = {'bootstrap.servers': 'kafka:9092'}
 producer = Producer(conf)
 
 topic = 'test-topic'
 
-print("✅ Kafka Producer ready. Waiting for data :\n")
+print("✅ Kafka Producer ready. Sending automatic messages...\n")
 
+i = 0
 try:
     while True:
-        message = input("> ") 
-        if not message.strip(): 
-            continue
-
-        producer.produce(topic, value=message)
-        producer.flush() 
-        print(f"☑️  Message envoyé : {message}")
+        message = f"Automatic message {i}"
+        producer.produce(topic, value=message.encode('utf-8'))
+        producer.flush()
+        print(f"☑️  Message sent: {message}")
+        i += 1
+        time.sleep(2)  # send one message every 2 seconds
 
 except KeyboardInterrupt:
-    print("\n🛑 Stop the producer.")
+    print("\n🛑 Producer manually stopped.")
 except Exception as e:
-    print("Erreur :", e)
+    print(f"⚠️ Error: {e}")
 finally:
     producer.flush()
+    print("👋 Shutting down Producer...")
