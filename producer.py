@@ -1,7 +1,7 @@
 from confluent_kafka import Producer
 
 # Local broker
-conf = {'bootstrap.servers': 'localhost:9092'}
+conf = {'bootstrap.servers': 'kafka:9092'}
 producer = Producer(conf)
 
 topic = 'test-topic'
