@@ -1,6 +1,6 @@
 from confluent_kafka import Consumer, KafkaError
 
-# Configuration du consumer Kafka
+# Kafka configuration
 conf = {
     'bootstrap.servers': 'kafka:9092',
     'group.id': 'python-group',
@@ -10,16 +10,21 @@ conf = {
 consumer = Consumer(conf)
 consumer.subscribe(['test-topic'])
 
-print('⏲ Waiting for messages \n')
+print("⏲ Waiting for messages...\n")
 
-while True:
-    msg = consumer.poll(1.0)
-    if msg is None:
-        continue
-    if msg.error():
-        if msg.error().code() == KafkaError._PARTITION_EOF:
+try:
+    while True:
+        msg = consumer.poll(1.0)
+        if msg is None:
             continue
+        if msg.error():
+            if msg.error().code() == KafkaError._PARTITION_EOF:
+                continue
+            else:
+                print(f"❌ Error: {msg.error()}")
         else:
-            print('Erreur :', msg.error())
-    else:
-        print('✉️ Received :', msg.value().decode('utf-8'))
+            print(f"✉️  Received: {msg.value().decode('utf-8')}")
+except KeyboardInterrupt:
+    print("\n🛑 Consumer stopped.")
+finally:
+    consumer.close()
