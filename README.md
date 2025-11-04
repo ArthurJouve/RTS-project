@@ -1,5 +1,5 @@
 
-# 🛰️ RTS Project - Kafka + Python (via Docker)
+# RTS Project - Kafka + Python (via Docker)
 
 ## ⚙️ Setup Instructions
 
@@ -135,3 +135,4 @@ If you want to clean up old images and volumes completely:
 ```bash
 docker system prune -af
 ```
+
