@@ -6,7 +6,9 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     ports:
-      - "2181:2181"
+      - "22181:2181"
+    networks:
+      - kafka-network
 
   kafka:
     image: confluentinc/cp-kafka:7.5.3
@@ -20,14 +22,37 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
     ports:
-      - "9092:9092"
+      - "29092:9092"
+    networks:
+      - kafka-network
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "26379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - kafka-network
 
   rts-project-python-app:
     build: .
     container_name: rts-project-python-app
     depends_on:
       - kafka
+      - redis
     volumes:
       - .:/app
     working_dir: /app
-    command: tail -f /dev/null  # keeps container running
+    networks:
+      - kafka-network
+    command: tail -f /dev/null
+
+networks:
+  kafka-network:
+    driver: bridge
+
+volumes:
+  redis-data:
