@@ -9,10 +9,10 @@ git clone https://github.com/ArthurJouve/RTS-project.git
 cd RTS-project
 ````
 
-If you want to use this configuration and following steps (including Docker setup and topic creation), switch to the `nina` branch:
+If you want to use this configuration and following steps (including Docker setup and topic creation), be sure to be into the `main` branch:
 
 ```bash
-git checkout nina
+git checkout main
 ```
 
 ---
@@ -135,4 +135,5 @@ If you want to clean up old images and volumes completely:
 ```bash
 docker system prune -af
 ```
+
 
