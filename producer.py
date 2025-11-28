@@ -31,10 +31,10 @@ def generate_event():
     """Generate a random network event with numeric ID + type + FQDN."""
     resource_type = random.choice(["server", "router", "switch", "firewall"])
     id_num = random.randint(1, 20)
-    region = random.choice(["EU-Central", "US-East", "AP-Southeast"])
+    region = random.choice(["EU-West", "US-East", "EU-East"])
     
     # Generate FQDN-style identifier
-    fqdn = f"{resource_type}-{id_num}.{region.lower().replace('-', '')}.ensea.com"
+    fqdn = f"{resource_type}-{id_num}.{region.lower()}.ensea.com"
     
     event = {
         "timestamp": datetime.utcnow().isoformat() + "Z",
