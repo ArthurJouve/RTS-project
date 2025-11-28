@@ -28,15 +28,29 @@ fake = Faker()
 print("🚀 Generating and sending random network events... (Press Ctrl+C to stop)\n")
 
 def generate_event():
-    """Generate a random network event."""
+    """Generate a random network event with numeric ID + type + FQDN."""
+    resource_type = random.choice(["server", "router", "switch", "firewall"])
+    id_num = random.randint(1, 100)
+    region = random.choice(["EU-Central", "US-East", "AP-Southeast"])
+    
+    # Generate FQDN-style identifier
+    fqdn = f"{resource_type}-{id_num}.{region.lower().replace('-', '')}.ensea.com"
+    
     event = {
         "timestamp": datetime.utcnow().isoformat() + "Z",
         "event_id": fake.uuid4(),
-        "resource_type": random.choice(["server", "router", "switch", "firewall"]),
-        "resource_id": random.randint(1, 100),
-        "operational_status": random.choice(["critical_alarm", "major_alarm", "minor_alarm", "warning", "none"]),
+
+        # --- identification fields ---
+        "resource_type": resource_type,     # server / router / switch / firewall
+        "resource_id": id_num,              # numeric ID
+        "resource_fqdn": fqdn,              # realistic FQDN identifier
+        
+        # --- operational data ---
+        "operational_status": random.choice([
+            "critical_alarm", "major_alarm", "minor_alarm", "warning", "none"
+        ]),
         "resource_ip": fake.ipv4_private(),
-        "region": random.choice(["EU-Central", "US-East", "AP-Southeast"]),
+        "region": region,
         "message": random.choice([
             "High memory usage detected",
             "CPU overload detected",
@@ -44,6 +58,8 @@ def generate_event():
             "Network latency above threshold",
             "No issues detected"
         ]),
+
+        # --- telemetry ---
         "cpu_usage": round(random.uniform(10.0, 99.0), 2),
         "memory_usage": round(random.uniform(10.0, 99.0), 2),
         "latency_ms": round(random.uniform(1.0, 100.0), 2),
@@ -59,7 +75,7 @@ try:
         producer.produce(topic, value=event_json.encode('utf-8'))
         producer.flush()
         print(f"📤 Sent event: {event_json}")
-        time.sleep(random.uniform(1, 3))  # simulate random delay between events
+        time.sleep(random.uniform(1, 3))  # simulate bursty traffic
 
 except KeyboardInterrupt:
     print("\n🛑 Stopping producer.")
