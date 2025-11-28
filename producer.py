@@ -30,7 +30,7 @@ print("🚀 Generating and sending random network events... (Press Ctrl+C to sto
 def generate_event():
     """Generate a random network event with numeric ID + type + FQDN."""
     resource_type = random.choice(["server", "router", "switch", "firewall"])
-    id_num = random.randint(1, 100)
+    id_num = random.randint(1, 20)
     region = random.choice(["EU-Central", "US-East", "AP-Southeast"])
     
     # Generate FQDN-style identifier
