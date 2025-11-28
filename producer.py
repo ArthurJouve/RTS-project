@@ -75,7 +75,7 @@ try:
         producer.produce(topic, value=event_json.encode('utf-8'))
         producer.flush()
         print(f"📤 Sent event: {event_json}")
-        time.sleep(random.uniform(1, 3))  # simulate bursty traffic
+        time.sleep(5)  # simulate bursty traffic
 
 except KeyboardInterrupt:
     print("\n🛑 Stopping producer.")
