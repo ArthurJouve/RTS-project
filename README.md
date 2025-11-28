@@ -42,8 +42,13 @@ newgrp docker
 ---
 
 ### 3. Build and start the containers
+If you are running the program for a second time or more, maybe it will be needed to run it before: 
 
-Once Docker is ready, build and start all the project containers using:
+```bash
+docker compose down
+```
+
+Once Docker is ready (after compose down if used), build and start all the project containers using:
 
 ```bash
 docker compose up -d --build
@@ -135,5 +140,6 @@ If you want to clean up old images and volumes completely:
 ```bash
 docker system prune -af
 ```
+
 
 
