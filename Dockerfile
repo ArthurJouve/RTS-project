@@ -13,5 +13,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copia o restante do código
 COPY . .
 
-# Define o comando padrão (para debug, você pode mudar depois)
-CMD ["python", "producer.py"]
+# Define o comando padrão: DummyApp + JSON server
+CMD ["sh", "-c", "python application.py & python json_server.py & tail -f /dev/null"]
