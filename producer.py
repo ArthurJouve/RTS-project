@@ -190,7 +190,7 @@ try:
         producer.produce(topic, value=event_json.encode('utf-8'))
         producer.flush()
         print(f"📤 Sent event: {event_json}")
-        time.sleep(5)
+        time.sleep(0.1)
 
 except KeyboardInterrupt:
     print("\n🛑 Stopping producer.")

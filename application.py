@@ -1,337 +1,591 @@
 import redis
-from confluent_kafka import Consumer, KafkaError
+from confluent_kafka import Consumer, KafkaError, TopicPartition
 import json
-import threading
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+
 
 class DummyApplication:
     def __init__(self):
-        # Redis connection
-        self.redis_client = redis.Redis(
-            host='redis',
+        # Redis connection with connection pooling
+        self.redispool = redis.ConnectionPool(
+            host="redis",
             port=6379,
-            decode_responses=True
+            decode_responses=True,
+            max_connections=10,
         )
+        self.redisclient = redis.Redis(connection_pool=self.redispool)
+
+        # Keys for tracking consumer state
+        self.redis_consumer_restart_count_key = "consumer_restart_count"
+        self.redis_consumer_heartbeat_key = "consumer_heartbeat"
+        self.redis_consumer_kafka_ready_key = "consumer_kafka_ready"
+
+        # Internal state
+        self.last_known_restart_count = None
+        self.total_verifications_performed = 0
+        self.verification_reports = []
         
-        # Kafka Consumer configuration
-        self.kafka_conf = {
-            'bootstrap.servers': 'kafka:9092',
-            'group.id': 'dummy-app-group',
-            'auto.offset.reset': 'earliest',  # Get all available messages
-            'enable.auto.commit': False
-        }
-        self.consumer = Consumer(self.kafka_conf)
-        
-        # Application's merged state (reliable, consistent final state)
-        self.merged_state = {}
-        self.lock = threading.Lock()
-        
-        # Track synchronization status
-        self.redis_loaded = False
-        self.kafka_started = False
-        self.sync_start_time = None
-        
-        # Statistics
-        self.events_from_redis = 0
-        self.events_from_kafka = 0
-        self.merge_conflicts = 0
-        self.desync_detected = 0
-        
-    def load_initial_state_from_redis(self):
+        # Pre-initialized verification consumer
+        self.verification_consumer = None
+        self.committed_offsets = {}
+
+    # ------------------------------------------------------------------
+    # SETUP: Préparer le consumer de vérification À L'AVANCE
+    # ------------------------------------------------------------------
+    def setup_verification_consumer(self):
         """
-        Step 1: Get past/initial state from Redis at startup
+        Setup verification consumer BEFORE detecting restart.
+        This way we're ready to read immediately when restart happens.
         """
         print("=" * 70)
-        print("STEP 1: Loading initial state from Redis")
+        print("SETUP - Preparing verification consumer...")
         print("=" * 70)
         
-        self.sync_start_time = datetime.now(timezone.utc)
+        # Lire les offsets committés du consumer Redis
+        print("Reading committed offsets from Redis consumer group...")
+        temp_consumer = Consumer(
+            {
+                "bootstrap.servers": "kafka:9092",
+                "group.id": "python-group",
+                "enable.auto.commit": False,
+            }
+        )
+        temp_consumer.subscribe(["test-topic"])
         
-        # Retrieve all resource:* keys
-        keys = self.redis_client.keys('resource:*')
+        assignment = None
+        for i in range(20):
+            temp_consumer.poll(0.5)
+            assignment = temp_consumer.assignment()
+            if assignment:
+                print(f"✅ Got assignment after {(i+1)*0.5:.1f}s")
+                break
         
-        with self.lock:
-            for key in keys:
-                data = self.redis_client.hgetall(key)
-                if not data:
-                    continue
-                    
-                resource_id = f"{data['resource_type']}:{data['resource_id']}"
-                
-                self.merged_state[resource_id] = {
-                    'timestamp': data['timestamp'],
-                    'event_id': data['event_id'],
-                    'resource_type': data['resource_type'],
-                    'resource_id': data['resource_id'],
-                    'operational_status': data['operational_status'],
-                    'source': 'redis_initial',
-                    'last_updated': self.sync_start_time.isoformat()
-                }
-                
-                self.events_from_redis += 1
+        if not assignment:
+            print("❌ ERROR: Could not get partition assignment")
+            temp_consumer.close()
+            return False
         
-        self.redis_loaded = True
+        self.committed_offsets = {}
+        for partition in assignment:
+            committed = temp_consumer.committed([partition], timeout=10.0)
+            if committed and committed[0] and committed[0].offset >= 0:
+                offset = committed[0].offset
+                self.committed_offsets[partition.partition] = offset
+                print(f"  Partition {partition.partition}: committed offset = {offset}")
+            else:
+                low, high = temp_consumer.get_watermark_offsets(partition, timeout=5.0)
+                self.committed_offsets[partition.partition] = low
+                print(f"  Partition {partition.partition}: no committed offset, using earliest = {low}")
         
-        print(f"✅ Loaded {self.events_from_redis} resources from Redis (initial state)")
-        print(f"📸 Snapshot time: {self.sync_start_time.isoformat()}\n")
+        temp_consumer.close()
         
-    def consume_kafka_events(self):
+        # Créer le consumer de vérification
+        print("\nCreating verification consumer...")
+        unique_group_id = f"dummy-verify-{int(time.time() * 1000)}"
+        self.verification_consumer = Consumer(
+            {
+                "bootstrap.servers": "kafka:9092",
+                "group.id": unique_group_id,
+                "enable.auto.commit": False,
+            }
+        )
+        self.verification_consumer.subscribe(["test-topic"])
+        
+        # Attendre l'assignation
+        assignment = None
+        for i in range(20):
+            self.verification_consumer.poll(0.5)
+            assignment = self.verification_consumer.assignment()
+            if assignment:
+                print(f"✅ Got assignment after {(i+1)*0.5:.1f}s")
+                break
+        
+        if not assignment:
+            print("❌ ERROR: Could not get partition assignment")
+            self.verification_consumer.close()
+            self.verification_consumer = None
+            return False
+        
+        # Se positionner aux offsets committés
+        print("Seeking to committed offsets...")
+        for partition in assignment:
+            if partition.partition in self.committed_offsets:
+                offset = self.committed_offsets[partition.partition]
+                self.verification_consumer.seek(
+                    TopicPartition(partition.topic, partition.partition, offset)
+                )
+                print(f"  Partition {partition.partition}: ready at offset {offset}")
+        
+        print("✅ Verification consumer ready!")
+        print("=" * 70)
+        return True
+
+    # ------------------------------------------------------------------
+    # MONITORING: détecter les restarts et retourner immédiatement
+    # ------------------------------------------------------------------
+    def wait_for_redis_consumer_restart(self):
         """
-        Step 2: Get new events from Kafka in real time
+        Monitor Redis consumer and detect when it restarts.
+        Returns immediately when restart is detected.
         """
         print("=" * 70)
-        print("STEP 2: Subscribing to Kafka for real-time events")
+        print("MONITORING MODE - Waiting for Redis Consumer Restart")
         print("=" * 70)
-        print("⚡ Real-time merge mode active\n")
-        
-        self.consumer.subscribe(['test-topic'])
-        self.kafka_started = True
-        
+        print("Verification consumer is READY and waiting...")
+        print("Checking every 0.1 second for immediate detection...")
+
+        # Initialiser le compteur connu
+        if self.last_known_restart_count is None:
+            restart_count = self.redisclient.get(self.redis_consumer_restart_count_key)
+            if restart_count:
+                self.last_known_restart_count = int(restart_count)
+            else:
+                self.last_known_restart_count = 0
+            print(f"Current restart count: {self.last_known_restart_count}")
+
+        check_interval = 0.1  # Check every 100ms for faster detection
+        checks_performed = 0
+
         try:
             while True:
-                msg = self.consumer.poll(1.0)
-                
-                if msg is None:
-                    continue
-                    
-                if msg.error():
-                    if msg.error().code() == KafkaError._PARTITION_EOF:
-                        continue
-                    else:
-                        print(f"❌ Kafka error: {msg.error()}")
-                        continue
-                
-                try:
-                    event = json.loads(msg.value().decode('utf-8'))
-                    self.merge_event(event)
-                    self.consumer.commit(asynchronous=False)
-                    
-                except json.JSONDecodeError as e:
-                    print(f"⚠️  JSON decode error: {e}")
-                except Exception as e:
-                    print(f"❌ Error processing event: {e}")
-                    import traceback
-                    traceback.print_exc()
-                
-        except KeyboardInterrupt:
-            print("\n🛑 Stopping Kafka consumer...")
-            self.print_final_statistics()
-        finally:
-            self.consumer.close()
-    
-    def merge_event(self, event):
-        """
-        Step 3: Merge the two streams (Redis + Kafka)
-        Core challenge: Handle delays and desynchronization
-        """
-        resource_id = f"{event['resource_type']}:{event['resource_id']}"
-        event_timestamp = datetime.fromisoformat(event['timestamp'].replace('Z', '+00:00'))
-        
-        print(f"\n📨 Kafka event: {resource_id} - {event['operational_status']}")
-        print(f"   Event timestamp: {event['timestamp']}")
-        print(f"   Event ID: {event['event_id']}")
-        
-        with self.lock:
-            self.events_from_kafka += 1
-            
-            # Check if resource exists in merged state
-            if resource_id in self.merged_state:
-                existing = self.merged_state[resource_id]
-                existing_timestamp = datetime.fromisoformat(
-                    existing['timestamp'].replace('Z', '+00:00')
+                time.sleep(check_interval)
+                checks_performed += 1
+
+                current_restart_count = self.redisclient.get(
+                    self.redis_consumer_restart_count_key
                 )
-                
-                # Handle delay: Compare timestamps to resolve conflicts
-                if event_timestamp > existing_timestamp:
-                    # Kafka event is newer - update
-                    print(f"   🔄 MERGE: Kafka event is newer")
-                    print(f"      Old: {existing['operational_status']} ({existing['timestamp']})")
-                    print(f"      New: {event['operational_status']} ({event['timestamp']})")
-                    
-                    if existing['operational_status'] != event['operational_status']:
-                        self.merge_conflicts += 1
-                    
-                    self.update_merged_state(resource_id, event, 'kafka_update')
-                    
-                elif event_timestamp == existing_timestamp:
-                    # Same timestamp - check event IDs
-                    if existing['event_id'] == event['event_id']:
-                        print(f"   ✅ DUPLICATE: Same event already in state (no update needed)")
-                    else:
-                        print(f"   ⚠️  CONFLICT: Same timestamp, different event IDs")
-                        self.desync_detected += 1
-                        # Keep the one from Kafka as it's the source of truth
-                        self.update_merged_state(resource_id, event, 'kafka_conflict')
-                        
-                else:
-                    # Kafka event is older - handle desynchronization
-                    print(f"   ⏪ DESYNC: Kafka event is older than current state")
-                    print(f"      Current: {existing['operational_status']} ({existing['timestamp']})")
-                    print(f"      Received: {event['operational_status']} ({event['timestamp']})")
-                    print(f"   → Keeping current state (newer)")
-                    self.desync_detected += 1
-                    
-            else:
-                # New resource discovered via Kafka
-                print(f"   🆕 NEW: Resource not in initial Redis state")
-                self.update_merged_state(resource_id, event, 'kafka_new')
+                if current_restart_count:
+                    current_restart_count = int(current_restart_count)
+
+                    if current_restart_count > self.last_known_restart_count:
+                        print("=" * 70)
+                        print("🚨 REDIS CONSUMER RESTART DETECTED!")
+                        print("=" * 70)
+                        print(f"Previous count: {self.last_known_restart_count}")
+                        print(f"Current count:  {current_restart_count}")
+                        detection_time = datetime.now(timezone.utc)
+                        print(f"Time: {detection_time.isoformat()}")
+                        print("=" * 70)
+                        self.last_known_restart_count = current_restart_count
+                        return detection_time
+
+                # Heartbeat info every 10 seconds
+                if checks_performed % 100 == 0:  # Every 10s (100 * 0.1s)
+                    last_heartbeat = self.redisclient.get(
+                        self.redis_consumer_heartbeat_key
+                    )
+                    if last_heartbeat:
+                        heartbeat_time = datetime.fromisoformat(last_heartbeat)
+                        age = (datetime.now(timezone.utc) - heartbeat_time).total_seconds()
+                        print(f"Consumer heartbeat: {age:.1f}s ago (count={self.last_known_restart_count})")
+
+        except KeyboardInterrupt:
+            print("Monitoring stopped by user")
+            return None
+
+    # ------------------------------------------------------------------
+    # Attendre que le consumer soit prêt à lire Kafka
+    # ------------------------------------------------------------------
+    def wait_for_consumer_kafka_ready(self, timeout=5.0):
+        """
+        Wait for the Redis consumer to signal it's ready to read from Kafka.
+        This ensures we start capturing at the same time as the consumer.
+        """
+        print("\n⏳ Waiting for consumer to be ready to read Kafka...")
+        print(f"   Checking '{self.redis_consumer_kafka_ready_key}' flag (timeout: {timeout}s)...")
+        
+        start_time = time.time()
+        checks = 0
+        
+        while (time.time() - start_time) < timeout:
+            ready_flag = self.redisclient.get(self.redis_consumer_kafka_ready_key)
+            if ready_flag:
+                elapsed = time.time() - start_time
+                print(f"✅ Consumer is READY! (detected after {elapsed:.3f}s)")
+                return True
             
-            # Compare with current Redis state to detect synchronization issues
-            self.detect_synchronization_issues(resource_id)
-    
-    def update_merged_state(self, resource_id, event, source):
+            time.sleep(0.05)  # Check every 50ms
+            checks += 1
+        
+        print(f"⚠️  Timeout waiting for consumer ready flag ({timeout}s)")
+        print("   Proceeding anyway, but timing might be slightly off...")
+        return False
+
+    # ------------------------------------------------------------------
+    # VERIFICATION: Lire pendant 1 seconde dès maintenant
+    # ------------------------------------------------------------------
+    def verify_resynchronization(self, t0):
         """
-        Update the merged state (called within lock)
+        Read Kafka events for 1 second starting NOW (at t0).
+        The verification consumer is already positioned at the right offset.
         """
-        self.merged_state[resource_id] = {
-            'timestamp': event['timestamp'],
-            'event_id': event['event_id'],
-            'resource_type': event['resource_type'],
-            'resource_id': event['resource_id'],
-            'operational_status': event['operational_status'],
-            'source': source,
-            'last_updated': datetime.now(timezone.utc).isoformat()
+        t1 = t0 + timedelta(seconds=0.5) 
+        
+        print("=" * 70)
+        print("⚡ ZERO-LOSS VERIFICATION (IMMEDIATE)")
+        print("=" * 70)
+        print(f"[t0] Starting capture at: {t0.isoformat()}")
+        print(f"[t1] Ending capture at:   {t1.isoformat()}")
+        print(f"Reading from offsets: {self.committed_offsets}")
+        print("=" * 70)
+
+        # ------------------------------------------------------------------
+        # Lire les événements pendant [t0, t1]
+        # ------------------------------------------------------------------
+        kafka_events = []
+        events_read = 0
+        
+        print("📖 Reading Kafka events NOW...")
+        
+        while datetime.now(timezone.utc) < t1:
+            remaining_time = (t1 - datetime.now(timezone.utc)).total_seconds()
+            if remaining_time <= 0:
+                break
+                
+            poll_timeout = min(0.05, max(0.01, remaining_time))
+            msg = self.verification_consumer.poll(poll_timeout)
+            
+            if msg is None:
+                continue
+
+            if msg.error():
+                if msg.error().code() == KafkaError._PARTITION_EOF:
+                    continue
+                else:
+                    continue
+
+            events_read += 1
+
+            try:
+                event = json.loads(msg.value().decode("utf-8"))
+                kafka_events.append(event)
+                
+                if events_read % 10 == 0:
+                    print(f"  📨 Captured {len(kafka_events)} events (offset {msg.offset()})...")
+
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                continue
+
+        print(f"✅ Captured {len(kafka_events)} events during 1-second window")
+        
+        if not kafka_events:
+            print("⚠️  No events captured - consumer may have been caught up")
+            return self.create_empty_report(t0, t1)
+
+        # ------------------------------------------------------------------
+        # Construire l'état Kafka
+        # ------------------------------------------------------------------
+        print("\n📊 Building Kafka reference state...")
+        
+        kafka_events.sort(
+            key=lambda e: datetime.fromisoformat(e["timestamp"].replace("Z", "+00:00"))
+        )
+        
+        kafka_latest_state = {}
+        for event in kafka_events:
+            resource_id = f"{event['resource_type']}:{event['resource_id']}"
+            event_time = datetime.fromisoformat(
+                event["timestamp"].replace("Z", "+00:00")
+            )
+            if resource_id not in kafka_latest_state:
+                kafka_latest_state[resource_id] = event
+            else:
+                existing_time = datetime.fromisoformat(
+                    kafka_latest_state[resource_id]["timestamp"].replace("Z", "+00:00")
+                )
+                if event_time >= existing_time:
+                    kafka_latest_state[resource_id] = event
+
+        print(f"✅ Kafka reference: {len(kafka_latest_state)} unique resources")
+
+        # ------------------------------------------------------------------
+        # Attendre puis capturer Redis
+        # ------------------------------------------------------------------
+        print("\n⏳ Waiting 2s for Redis consumer to process events...")
+        time.sleep(2)
+
+        print("📸 Capturing Redis state...")
+        redis_capture_time = datetime.now(timezone.utc)
+        cursor = 0
+        redis_state = {}
+
+        while True:
+            cursor, keys = self.redisclient.scan(
+                cursor=cursor,
+                match="resource:*",
+                count=1000,
+            )
+            if keys:
+                pipe = self.redisclient.pipeline(transaction=False)
+                for key in keys:
+                    pipe.hgetall(key)
+                results = pipe.execute()
+
+                for key, data in zip(keys, results):
+                    if not data:
+                        continue
+                    resource_id = f"{data.get('resource_type')}:{data.get('resource_id')}"
+                    redis_state[resource_id] = data
+
+            if cursor == 0:
+                break
+
+        print(f"✅ Redis has {len(redis_state)} resources")
+
+        # ------------------------------------------------------------------
+        # Comparaison : Vérifier que Redis a traité TOUS les événements capturés
+        # ------------------------------------------------------------------
+        print("\n🔍 Comparing captured Kafka events vs Redis...")
+        print(f"Goal: Ensure Redis processed all {len(kafka_latest_state)} resources from capture window")
+        
+        missing = []
+        outdated = []
+        correct = 0
+
+        for resource_id, kafka_event in kafka_latest_state.items():
+            kafka_event_id = kafka_event["event_id"]
+            kafka_time = datetime.fromisoformat(
+                kafka_event["timestamp"].replace("Z", "+00:00")
+            )
+            
+            if resource_id not in redis_state:
+                # Ressource pas dans Redis = le consumer n'a PAS traité cet événement
+                print(f"  ❌ MISSING: {resource_id}")
+                print(f"      Application captured: {kafka_event_id[:8]}... at {kafka_event['timestamp']}")
+                print(f"      Redis: NOT FOUND")
+                missing.append({
+                    "resource_id": resource_id,
+                    "kafka_event_id": kafka_event_id,
+                    "kafka_timestamp": kafka_event["timestamp"],
+                })
+                continue
+
+            redis_data = redis_state[resource_id]
+            
+            if "timestamp" not in redis_data:
+                print(f"  ⚠️  OUTDATED (no timestamp): {resource_id}")
+                outdated.append({
+                    "resource_id": resource_id,
+                    "kafka_event_id": kafka_event_id,
+                    "redis_event_id": redis_data.get("event_id", "N/A"),
+                    "reason": "missing_timestamp"
+                })
+                continue
+            
+            try:
+                redis_time = datetime.fromisoformat(
+                    redis_data["timestamp"].replace("Z", "+00:00")
+                )
+            except (ValueError, AttributeError):
+                print(f"  ⚠️  OUTDATED (invalid timestamp): {resource_id}")
+                outdated.append({
+                    "resource_id": resource_id,
+                    "kafka_event_id": kafka_event_id,
+                    "redis_event_id": redis_data.get("event_id", "N/A"),
+                    "reason": "invalid_timestamp"
+                })
+                continue
+            
+            # LOGIQUE CLÉ : Si l'application a capturé un événement avec timestamp T,
+            # Redis DOIT avoir un timestamp >= T (sinon il a loupé cet événement)
+            if redis_time < kafka_time:
+                # Redis a un timestamp PLUS ANCIEN = le consumer n'a PAS traité l'événement capturé
+                timediff = (kafka_time - redis_time).total_seconds()
+                print(f"  ⚠️  OUTDATED: {resource_id} (consumer is {timediff:.3f}s behind)")
+                print(f"      Application captured: event at {kafka_event['timestamp']}")
+                print(f"      Redis has:           event at {redis_data['timestamp']}")
+                print(f"      → Consumer missed this event during resync!")
+                outdated.append({
+                    "resource_id": resource_id,
+                    "kafka_event_id": kafka_event_id,
+                    "redis_event_id": redis_data.get("event_id", "N/A"),
+                    "kafka_timestamp": kafka_event["timestamp"],
+                    "redis_timestamp": redis_data["timestamp"],
+                    "timediff_seconds": timediff,
+                })
+            else:
+                # Redis a un timestamp >= kafka_time = OK, le consumer a bien traité l'événement
+                correct += 1
+                if correct <= 3:  # Afficher seulement les 3 premiers
+                    if redis_time == kafka_time:
+                        print(f"  ✅ CORRECT: {resource_id} (exact match)")
+                    else:
+                        timediff = (redis_time - kafka_time).total_seconds()
+                        print(f"  ✅ CORRECT: {resource_id} (Redis +{timediff:.3f}s newer - OK)")
+
+        total_issues = len(missing) + len(outdated)
+        
+        print("\n" + "=" * 70)
+        print("📊 VERIFICATION RESULTS")
+        print("=" * 70)
+        print(f"Captured window: [{t0.isoformat()}] → [{t1.isoformat()}]")
+        print(f"Wait time for consumer: 2.0s")
+        print("")
+        print(f"✅ Correct:      {correct} / {len(kafka_latest_state)}")
+        print(f"❌ Missing:      {len(missing)}")
+        print(f"⚠️  Outdated:     {len(outdated)}")
+        print("")
+        
+        if total_issues == 0:
+            print("🎉 ZERO-LOSS VERIFIED!")
+            print("   Redis consumer processed ALL captured events correctly.")
+            print("   No events were missed during resynchronization.")
+        else:
+            print(f"⚠️  {total_issues} ISSUE(S) DETECTED:")
+            if len(missing) > 0:
+                print(f"   - {len(missing)} events NOT FOUND in Redis")
+                print(f"     → Consumer did not process these events")
+            if len(outdated) > 0:
+                print(f"   - {len(outdated)} events OUTDATED in Redis")
+                print(f"     → Consumer has older version, missed updates")
+
+        # ------------------------------------------------------------------
+        # Réparation
+        # ------------------------------------------------------------------
+        repaired = 0
+        if total_issues > 0:
+            print("\n🔧 Repairing Redis...")
+            
+            for item in missing + outdated:
+                resource_id = item["resource_id"]
+                kafka_event = kafka_latest_state.get(resource_id)
+                if not kafka_event:
+                    continue
+
+                key = f"resource:{kafka_event['resource_type']}:{kafka_event['resource_id']}"
+                try:
+                    self.redisclient.hset(key, mapping=kafka_event)
+                    repaired += 1
+                except Exception as e:
+                    print(f"  ❌ Error repairing {key}: {e}")
+            
+            print(f"✅ Repaired {repaired} resources")
+
+        # ------------------------------------------------------------------
+        # Rapport
+        # ------------------------------------------------------------------
+        verification_end_time = datetime.now(timezone.utc)
+        report = {
+            "verification_number": self.total_verifications_performed + 1,
+            "timestamp": t0.isoformat(),
+            "duration_seconds": (verification_end_time - t0).total_seconds(),
+            "window": {
+                "t0": t0.isoformat(),
+                "t1": t1.isoformat(),
+            },
+            "committed_offsets": self.committed_offsets,
+            "metrics": {
+                "kafka_events_in_window": len(kafka_events),
+                "unique_kafka_resources": len(kafka_latest_state),
+                "redis_resources": len(redis_state),
+                "correctly_synchronized": correct,
+                "missing_in_redis": len(missing),
+                "outdated_in_redis": len(outdated),
+                "total_issues": total_issues,
+                "repaired": repaired,
+            },
+            "issues": {
+                "missing": missing,
+                "outdated": outdated,
+            },
+            "status": "ZERO-LOSS" if total_issues == 0 else "ISSUES-DETECTED",
+        }
+
+        filename = f"tmp_verification_report_{self.total_verifications_performed + 1}.json"
+        with open(filename, "w") as f:
+            json.dump(report, f, indent=2)
+        
+        with open("tmp_verification_history.jsonl", "a") as f:
+            f.write(json.dumps(report) + "\n")
+
+        self.total_verifications_performed += 1
+        print(f"\n📄 Report saved: {filename}")
+        print("=" * 70)
+        return report
+
+    def create_empty_report(self, t0, t1):
+        """Create report when no events captured"""
+        report = {
+            "verification_number": self.total_verifications_performed + 1,
+            "timestamp": t0.isoformat(),
+            "duration_seconds": 1.0,
+            "window": {"t0": t0.isoformat(), "t1": t1.isoformat()},
+            "committed_offsets": self.committed_offsets,
+            "metrics": {
+                "kafka_events_in_window": 0,
+                "unique_kafka_resources": 0,
+                "redis_resources": 0,
+                "correctly_synchronized": 0,
+                "missing_in_redis": 0,
+                "outdated_in_redis": 0,
+                "total_issues": 0,
+                "repaired": 0,
+            },
+            "status": "NO-EVENTS",
         }
         
-        print(f"   ✅ Merged state updated: {event['operational_status']}")
-    
-    def detect_synchronization_issues(self, resource_id):
-        """
-        Step 4: Compute differences between merged state and current Redis
-        Detects if consumer is behind, ahead, or in sync
-        """
-        # Get current Redis state for comparison
-        resource_type, resource_id_num = resource_id.split(':')
-        redis_key = f"resource:{resource_type}:{resource_id_num}"
+        filename = f"tmp_verification_report_{self.total_verifications_performed + 1}.json"
+        with open(filename, "w") as f:
+            json.dump(report, f, indent=2)
         
-        redis_current = self.redis_client.hgetall(redis_key)
-        merged = self.merged_state[resource_id]
-        
-        if not redis_current:
-            print(f"   📊 SYNC STATUS: Redis consumer hasn't processed this yet")
-            self.export_difference({
-                'resource_id': resource_id,
-                'merged_status': merged['operational_status'],
-                'redis_status': 'NOT_YET_PROCESSED',
-                'sync_issue': 'CONSUMER_LAG',
-                'merged_timestamp': merged['timestamp']
-            })
-            return
-        
-        # Compare merged state with current Redis
-        if redis_current['operational_status'] != merged['operational_status']:
-            redis_ts = datetime.fromisoformat(redis_current['timestamp'].replace('Z', '+00:00'))
-            merged_ts = datetime.fromisoformat(merged['timestamp'].replace('Z', '+00:00'))
-            
-            if redis_ts > merged_ts:
-                issue = 'MERGED_STATE_BEHIND'
-                print(f"   📊 SYNC STATUS: Merged state is behind Redis consumer")
-            elif redis_ts < merged_ts:
-                issue = 'REDIS_CONSUMER_BEHIND'
-                print(f"   📊 SYNC STATUS: Redis consumer is behind merged state")
-            else:
-                issue = 'STATUS_CONFLICT_SAME_TIME'
-                print(f"   📊 SYNC STATUS: Conflict at same timestamp")
-            
-            print(f"      Merged: {merged['operational_status']} ({merged['timestamp']})")
-            print(f"      Redis: {redis_current['operational_status']} ({redis_current['timestamp']})")
-            
-            self.export_difference({
-                'resource_id': resource_id,
-                'merged_status': merged['operational_status'],
-                'redis_status': redis_current['operational_status'],
-                'merged_timestamp': merged['timestamp'],
-                'redis_timestamp': redis_current['timestamp'],
-                'merged_event_id': merged['event_id'],
-                'redis_event_id': redis_current['event_id'],
-                'sync_issue': issue
-            })
-        else:
-            print(f"   📊 SYNC STATUS: ✅ Perfect sync with Redis consumer")
-    
-    def export_difference(self, difference):
-        """
-        Export detected differences for monitoring
-        """
-        try:
-            metric = {
-                'timestamp': datetime.now(timezone.utc).isoformat(),
-                'events_from_redis': self.events_from_redis,
-                'events_from_kafka': self.events_from_kafka,
-                'merge_conflicts': self.merge_conflicts,
-                'desync_detected': self.desync_detected,
-                'difference': difference
-            }
-            
-            # Real-time log
-            with open('/tmp/sync_issues.jsonl', 'a') as f:
-                f.write(json.dumps(metric) + '\n')
-            
-            # Latest state for Grafana
-            with open('/tmp/sync_latest.json', 'w') as f:
-                json.dump(metric, f, indent=2)
-                
-        except Exception as e:
-            print(f"⚠️  Error exporting: {e}")
-    
-    def get_final_consistent_state(self):
-        """
-        Produce a reliable, consistent final state
-        """
-        with self.lock:
-            return dict(self.merged_state)
-    
-    def print_final_statistics(self):
-        """
-        Print final statistics
-        """
-        print("\n" + "=" * 70)
-        print("📊 FINAL STATISTICS - Reliable, Consistent Final State")
-        print("=" * 70)
-        print(f"Resources in merged state: {len(self.merged_state)}")
-        print(f"Events from Redis (initial): {self.events_from_redis}")
-        print(f"Events from Kafka (real-time): {self.events_from_kafka}")
-        print(f"Merge conflicts resolved: {self.merge_conflicts}")
-        print(f"Desynchronization detected: {self.desync_detected}")
-        
-        if self.events_from_kafka > 0:
-            conflict_rate = (self.merge_conflicts / self.events_from_kafka) * 100
-            desync_rate = (self.desync_detected / self.events_from_kafka) * 100
-            print(f"\nConflict rate: {conflict_rate:.2f}%")
-            print(f"Desynchronization rate: {desync_rate:.2f}%")
-        
-        # Count by source
-        sources = {}
-        with self.lock:
-            for resource_id, state in self.merged_state.items():
-                source = state['source']
-                sources[source] = sources.get(source, 0) + 1
-        
-        print(f"\nFinal state composition:")
-        for source, count in sources.items():
-            print(f"  - {source}: {count} resources")
-        
-        print("=" * 70)
-        print("✅ Resynchronization complete - No events lost")
-        print("=" * 70)
-    
+        self.total_verifications_performed += 1
+        return report
+
+    # ------------------------------------------------------------------
+    # MAIN LOOP
+    # ------------------------------------------------------------------
     def start(self):
-        """
-        Start the dummy application
-        """
-        print("\n" + "=" * 70)
-        print("🚀 DUMMY APPLICATION - Event Resynchronization System")
         print("=" * 70)
-        print("Goal: Merge Redis (past) + Kafka (real-time) → Consistent state")
-        print("Challenge: Handle delays, conflicts, desynchronization")
-        print("=" * 70 + "\n")
-        
-        # Step 1: Load initial state from Redis
-        self.load_initial_state_from_redis()
-        
-        # Step 2: Subscribe to Kafka and merge in real-time
-        self.consume_kafka_events()
+        print("🚀 DUMMY APPLICATION - Zero-Loss Verification (IMMEDIATE MODE)")
+        print("=" * 70)
+        print("Strategy: Prepare consumer in advance, detect restart instantly")
+        print("=" * 70)
+
+        try:
+            while True:
+                # 1) Setup verification consumer AVANT de détecter le restart
+                if not self.setup_verification_consumer():
+                    print("❌ Failed to setup verification consumer, retrying in 5s...")
+                    time.sleep(5)
+                    continue
+
+                # 2) Attendre le restart (consumer déjà prêt)
+                restart_time = self.wait_for_redis_consumer_restart()
+                if not restart_time:
+                    break
+
+                # 3) NOUVEAU : Attendre que le consumer soit prêt à lire Kafka
+                self.wait_for_consumer_kafka_ready(timeout=5.0)
+                
+                # 4) MAINTENANT définir t0 (le consumer est prêt)
+                t0 = datetime.now(timezone.utc)
+                print(f"⚡ Starting verification NOW at {t0.isoformat()}")
+                
+                # 5) Lancer la vérification
+                self.verify_resynchronization(t0)
+
+                # 6) Fermer le consumer de vérification
+                if self.verification_consumer:
+                    self.verification_consumer.close()
+                    self.verification_consumer = None
+
+                print("\n✅ Verification complete - Preparing for next restart...")
+                print(f"Total verifications: {self.total_verifications_performed}\n")
+
+        except KeyboardInterrupt:
+            print("\n🛑 Application stopped")
+            if self.verification_consumer:
+                self.verification_consumer.close()
+            
+            print("=" * 70)
+            print("📊 SUMMARY")
+            print("=" * 70)
+            print(f"Total verifications: {self.total_verifications_performed}")
+            if self.verification_reports:
+                for i, report in enumerate(self.verification_reports, 1):
+                    print(f"  {i}. {report['status']} - {report['metrics']['total_issues']} issues")
+            print("=" * 70)
 
 
 if __name__ == "__main__":
