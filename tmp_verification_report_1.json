@@ -1,0 +1,564 @@
+{
+  "verification_number": 1,
+  "timestamp": "2025-12-11T10:31:04.137064+00:00",
+  "duration_seconds": 2.530289,
+  "window": {
+    "t0": "2025-12-11T10:31:04.137064+00:00",
+    "t1": "2025-12-11T10:31:04.637064+00:00"
+  },
+  "committed_offsets": {
+    "0": 79326
+  },
+  "metrics": {
+    "kafka_events_in_window": 133,
+    "unique_kafka_resources": 67,
+    "redis_resources": 80,
+    "correctly_synchronized": 0,
+    "missing_in_redis": 0,
+    "outdated_in_redis": 67,
+    "total_issues": 67,
+    "repaired": 67
+  },
+  "issues": {
+    "missing": [],
+    "outdated": [
+      {
+        "resource_id": "server:5",
+        "kafka_event_id": "5e59dbb3-a810-412d-95fd-88ac7f012d15",
+        "redis_event_id": "86e082ee-4203-4fc6-896f-e56b97f9b9ac",
+        "kafka_timestamp": "2025-12-11T10:31:00.738401Z",
+        "redis_timestamp": "2025-12-11T10:30:48.438925Z",
+        "timediff_seconds": 12.299476
+      },
+      {
+        "resource_id": "switch:15",
+        "kafka_event_id": "d27a9f68-e418-4280-baab-4a66d145350a",
+        "redis_event_id": "7a0ccde2-663b-4dca-8ab8-2294a7b44795",
+        "kafka_timestamp": "2025-12-11T10:30:50.928398Z",
+        "redis_timestamp": "2025-12-11T10:30:39.898553Z",
+        "timediff_seconds": 11.029845
+      },
+      {
+        "resource_id": "router:16",
+        "kafka_event_id": "3ec19cce-91e8-4883-bbdb-75f47dcdb232",
+        "redis_event_id": "9388d0d6-dea4-4366-b951-10a23ac924a0",
+        "kafka_timestamp": "2025-12-11T10:31:01.675056Z",
+        "redis_timestamp": "2025-12-11T10:30:43.043894Z",
+        "timediff_seconds": 18.631162
+      },
+      {
+        "resource_id": "server:17",
+        "kafka_event_id": "aa5656e8-86df-427d-b288-582dcd5ed343",
+        "redis_event_id": "9c717994-6342-4da1-bf2c-c09f9f86c631",
+        "kafka_timestamp": "2025-12-11T10:31:01.781545Z",
+        "redis_timestamp": "2025-12-11T10:30:49.369694Z",
+        "timediff_seconds": 12.411851
+      },
+      {
+        "resource_id": "server:13",
+        "kafka_event_id": "d634c466-d3b7-49c1-b617-449532687c7b",
+        "redis_event_id": "5273e3c3-e1b5-4dfb-8fa2-2adf421904c6",
+        "kafka_timestamp": "2025-12-11T10:30:57.595123Z",
+        "redis_timestamp": "2025-12-11T10:30:44.394375Z",
+        "timediff_seconds": 13.200748
+      },
+      {
+        "resource_id": "switch:8",
+        "kafka_event_id": "16709f5e-98ef-4381-92a2-e7670dcd163d",
+        "redis_event_id": "26318048-2cdb-4031-85d6-bd240fa2a8d2",
+        "kafka_timestamp": "2025-12-11T10:31:01.465363Z",
+        "redis_timestamp": "2025-12-11T10:30:29.080902Z",
+        "timediff_seconds": 32.384461
+      },
+      {
+        "resource_id": "router:17",
+        "kafka_event_id": "0d66655c-5319-4a15-8568-e5d5e3821ff9",
+        "redis_event_id": "4bd3ed40-e2b7-4daa-9ccb-fc13c74efac8",
+        "kafka_timestamp": "2025-12-11T10:30:54.685827Z",
+        "redis_timestamp": "2025-12-11T10:30:45.636610Z",
+        "timediff_seconds": 9.049217
+      },
+      {
+        "resource_id": "router:15",
+        "kafka_event_id": "a6f6124b-7340-47c2-9c9c-7272e999775b",
+        "redis_event_id": "6622164e-8e79-43fd-ab42-aac30233b815",
+        "kafka_timestamp": "2025-12-11T10:30:52.189408Z",
+        "redis_timestamp": "2025-12-11T10:30:49.158004Z",
+        "timediff_seconds": 3.031404
+      },
+      {
+        "resource_id": "switch:12",
+        "kafka_event_id": "b23d568f-7fbf-49cf-8e6b-d4c39fe09202",
+        "redis_event_id": "d5f5d72f-9530-40b8-aa10-a8c586730151",
+        "kafka_timestamp": "2025-12-11T10:31:00.844941Z",
+        "redis_timestamp": "2025-12-11T10:30:42.518576Z",
+        "timediff_seconds": 18.326365
+      },
+      {
+        "resource_id": "firewall:11",
+        "kafka_event_id": "e2800e3c-8cad-4bc3-b692-e9670660c4ee",
+        "redis_event_id": "7ce30aef-ea61-42d2-85d1-b57feb1f058e",
+        "kafka_timestamp": "2025-12-11T10:30:59.488427Z",
+        "redis_timestamp": "2025-12-11T10:30:47.105160Z",
+        "timediff_seconds": 12.383267
+      },
+      {
+        "resource_id": "switch:5",
+        "kafka_event_id": "7756c498-1e8d-449a-afa1-d021fd3385e8",
+        "redis_event_id": "bae4253d-55fa-4058-8535-b1bbaf3dda7f",
+        "kafka_timestamp": "2025-12-11T10:30:51.871875Z",
+        "redis_timestamp": "2025-12-11T10:30:38.968842Z",
+        "timediff_seconds": 12.903033
+      },
+      {
+        "resource_id": "firewall:13",
+        "kafka_event_id": "13439dcf-37a3-4c81-b96b-578c89d60f40",
+        "redis_event_id": "3c1e1be4-4ae3-4c4d-a1c5-2ab77e8f355e",
+        "kafka_timestamp": "2025-12-11T10:31:01.361821Z",
+        "redis_timestamp": "2025-12-11T10:30:43.671801Z",
+        "timediff_seconds": 17.69002
+      },
+      {
+        "resource_id": "switch:19",
+        "kafka_event_id": "a9da1527-fb9b-47f0-ba0e-2ea2c0ff663f",
+        "redis_event_id": "a41464b6-a978-4df7-9e04-92526a63b303",
+        "kafka_timestamp": "2025-12-11T10:30:52.083934Z",
+        "redis_timestamp": "2025-12-11T10:30:41.160520Z",
+        "timediff_seconds": 10.923414
+      },
+      {
+        "resource_id": "switch:20",
+        "kafka_event_id": "2a6e5804-784b-467d-8b6d-8758cb6652a5",
+        "redis_event_id": "73c2f43d-adde-4c06-81b3-f16e07e02b5e",
+        "kafka_timestamp": "2025-12-11T10:30:55.303925Z",
+        "redis_timestamp": "2025-12-11T10:30:48.541318Z",
+        "timediff_seconds": 6.762607
+      },
+      {
+        "resource_id": "switch:11",
+        "kafka_event_id": "711cb93a-a0b4-44a4-99d1-a13d06f5388f",
+        "redis_event_id": "17bca9d1-c75f-4c0f-828c-60bc6396afd1",
+        "kafka_timestamp": "2025-12-11T10:31:03.747030Z",
+        "redis_timestamp": "2025-12-11T10:30:46.895106Z",
+        "timediff_seconds": 16.851924
+      },
+      {
+        "resource_id": "switch:16",
+        "kafka_event_id": "f1f02cb3-7f80-4644-a506-72caad7176dd",
+        "redis_event_id": "075e9e0d-b7db-4bb5-b9fb-89e8a560f3a1",
+        "kafka_timestamp": "2025-12-11T10:31:03.960026Z",
+        "redis_timestamp": "2025-12-11T10:30:45.217600Z",
+        "timediff_seconds": 18.742426
+      },
+      {
+        "resource_id": "switch:13",
+        "kafka_event_id": "300e7471-7bfa-4343-b9dc-3cc1c2de47ca",
+        "redis_event_id": "64c9fafa-a3e6-4bbc-8f5a-866ae99f6354",
+        "kafka_timestamp": "2025-12-11T10:30:52.613773Z",
+        "redis_timestamp": "2025-12-11T10:30:50.098105Z",
+        "timediff_seconds": 2.515668
+      },
+      {
+        "resource_id": "firewall:20",
+        "kafka_event_id": "a14c9d95-3d04-46d6-889e-e39b324aab77",
+        "redis_event_id": "76a328e2-92db-420b-ba92-acdf45a6a779",
+        "kafka_timestamp": "2025-12-11T10:30:52.822892Z",
+        "redis_timestamp": "2025-12-11T10:30:40.314248Z",
+        "timediff_seconds": 12.508644
+      },
+      {
+        "resource_id": "firewall:18",
+        "kafka_event_id": "e96c4a8d-b1ae-4578-a8d1-8fee88e2424e",
+        "redis_event_id": "8fee6607-aacf-421b-a153-750085833690",
+        "kafka_timestamp": "2025-12-11T10:30:52.925427Z",
+        "redis_timestamp": "2025-12-11T10:30:36.055191Z",
+        "timediff_seconds": 16.870236
+      },
+      {
+        "resource_id": "firewall:10",
+        "kafka_event_id": "c810e8d8-19c1-4567-8d33-876c4e6de612",
+        "redis_event_id": "8f6e7207-76ca-4a17-8929-8b19c4ed498e",
+        "kafka_timestamp": "2025-12-11T10:31:03.538457Z",
+        "redis_timestamp": "2025-12-11T10:30:36.260244Z",
+        "timediff_seconds": 27.278213
+      },
+      {
+        "resource_id": "switch:1",
+        "kafka_event_id": "09ba8ce4-c3c8-4a1c-a242-b33659a46b50",
+        "redis_event_id": "65c66e82-f019-4db0-9cc9-c6c489162989",
+        "kafka_timestamp": "2025-12-11T10:31:01.884335Z",
+        "redis_timestamp": "2025-12-11T10:30:49.788808Z",
+        "timediff_seconds": 12.095527
+      },
+      {
+        "resource_id": "switch:17",
+        "kafka_event_id": "69a76cf8-a5e4-4e77-8686-5bebc4c362bc",
+        "redis_event_id": "b2938a47-326a-4486-99d7-5b0cc7157760",
+        "kafka_timestamp": "2025-12-11T10:30:55.819429Z",
+        "redis_timestamp": "2025-12-11T10:30:49.262491Z",
+        "timediff_seconds": 6.556938
+      },
+      {
+        "resource_id": "router:14",
+        "kafka_event_id": "2bb11d58-f3bf-47a4-93e6-7c38aa142c70",
+        "redis_event_id": "8a99f91f-2f35-450d-a296-34fe0107bf8b",
+        "kafka_timestamp": "2025-12-11T10:31:02.093963Z",
+        "redis_timestamp": "2025-12-11T10:30:49.580304Z",
+        "timediff_seconds": 12.513659
+      },
+      {
+        "resource_id": "router:13",
+        "kafka_event_id": "d2a28c7b-76da-4e64-8d1b-01e6817d4d2d",
+        "redis_event_id": "00083ee5-ab3d-4b42-aaaf-699af94288f3",
+        "kafka_timestamp": "2025-12-11T10:30:59.591320Z",
+        "redis_timestamp": "2025-12-11T10:30:47.310978Z",
+        "timediff_seconds": 12.280342
+      },
+      {
+        "resource_id": "router:5",
+        "kafka_event_id": "fdd7942d-f3de-4b0e-8d41-2c9a9da37cf1",
+        "redis_event_id": "e3ef4802-697b-4170-a991-5f36001da4b3",
+        "kafka_timestamp": "2025-12-11T10:30:53.760093Z",
+        "redis_timestamp": "2025-12-11T10:30:34.618960Z",
+        "timediff_seconds": 19.141133
+      },
+      {
+        "resource_id": "firewall:14",
+        "kafka_event_id": "7291a1d2-0cd1-48c2-bf69-232c5ed99a69",
+        "redis_event_id": "35fd8779-a719-48cd-a430-e2031e0b1afa",
+        "kafka_timestamp": "2025-12-11T10:30:53.863664Z",
+        "redis_timestamp": "2025-12-11T10:30:48.953267Z",
+        "timediff_seconds": 4.910397
+      },
+      {
+        "resource_id": "router:10",
+        "kafka_event_id": "6d69af07-69f1-40d2-abd2-173d392958f2",
+        "redis_event_id": "25c65e80-585e-4c99-aadd-40145805e06d",
+        "kafka_timestamp": "2025-12-11T10:30:54.171957Z",
+        "redis_timestamp": "2025-12-11T10:30:44.292410Z",
+        "timediff_seconds": 9.879547
+      },
+      {
+        "resource_id": "router:4",
+        "kafka_event_id": "acb94d91-1e7f-4e87-b607-c6d373d4cee5",
+        "redis_event_id": "fbe4055f-2c18-49c7-a29f-1ba688b8b8b1",
+        "kafka_timestamp": "2025-12-11T10:30:58.332377Z",
+        "redis_timestamp": "2025-12-11T10:30:35.644541Z",
+        "timediff_seconds": 22.687836
+      },
+      {
+        "resource_id": "server:18",
+        "kafka_event_id": "3b51c112-64cd-47e7-96a3-b144d93e1c63",
+        "redis_event_id": "f1edb4aa-9692-4dbb-927b-0ea655dc12c9",
+        "kafka_timestamp": "2025-12-11T10:30:54.890418Z",
+        "redis_timestamp": "2025-12-11T10:30:43.568704Z",
+        "timediff_seconds": 11.321714
+      },
+      {
+        "resource_id": "server:15",
+        "kafka_event_id": "9c0086d6-dff1-4854-9d36-9ae841e8c935",
+        "redis_event_id": "7eb205c6-29a6-409e-88ea-c2941501597d",
+        "kafka_timestamp": "2025-12-11T10:31:02.605070Z",
+        "redis_timestamp": "2025-12-11T10:30:50.307352Z",
+        "timediff_seconds": 12.297718
+      },
+      {
+        "resource_id": "server:16",
+        "kafka_event_id": "c9c6424c-41a0-4313-859d-bdf13933f889",
+        "redis_event_id": "94a62c2c-58df-4291-bfca-e0cd730b43c3",
+        "kafka_timestamp": "2025-12-11T10:30:58.856675Z",
+        "redis_timestamp": "2025-12-11T10:30:44.599052Z",
+        "timediff_seconds": 14.257623
+      },
+      {
+        "resource_id": "firewall:9",
+        "kafka_event_id": "ff1a58ae-34db-4168-aa69-33733c26ab15",
+        "redis_event_id": "3d81ed53-ce3d-4cdc-b07d-a0dd748ef15d",
+        "kafka_timestamp": "2025-12-11T10:30:56.861008Z",
+        "redis_timestamp": "2025-12-11T10:30:34.104094Z",
+        "timediff_seconds": 22.756914
+      },
+      {
+        "resource_id": "router:8",
+        "kafka_event_id": "9c9a3b25-b863-456f-81ec-b0251a5abbca",
+        "redis_event_id": "8271c891-6530-43bd-9dac-4e5a25a967b5",
+        "kafka_timestamp": "2025-12-11T10:30:55.512902Z",
+        "redis_timestamp": "2025-12-11T10:30:41.475933Z",
+        "timediff_seconds": 14.036969
+      },
+      {
+        "resource_id": "switch:18",
+        "kafka_event_id": "de69d965-5d9f-4927-ab19-1346b6586f59",
+        "redis_event_id": "72f59734-5da5-4f5b-8cdc-bce459d64961",
+        "kafka_timestamp": "2025-12-11T10:30:55.613705Z",
+        "redis_timestamp": "2025-12-11T10:30:49.683984Z",
+        "timediff_seconds": 5.929721
+      },
+      {
+        "resource_id": "switch:10",
+        "kafka_event_id": "ecfef3cc-d6ea-438d-9ba5-91c73275df35",
+        "redis_event_id": "27f9371c-3f5c-4995-8360-40613e6e2f9c",
+        "kafka_timestamp": "2025-12-11T10:31:01.052112Z",
+        "redis_timestamp": "2025-12-11T10:30:46.369216Z",
+        "timediff_seconds": 14.682896
+      },
+      {
+        "resource_id": "router:19",
+        "kafka_event_id": "217753a6-82f2-443e-9275-fb84f2d0c673",
+        "redis_event_id": "1b2effa1-f99d-47f3-b62b-47e267c36df9",
+        "kafka_timestamp": "2025-12-11T10:31:02.813860Z",
+        "redis_timestamp": "2025-12-11T10:30:36.572638Z",
+        "timediff_seconds": 26.241222
+      },
+      {
+        "resource_id": "router:7",
+        "kafka_event_id": "8a476699-2a81-41e3-83d3-dc8bed6cd393",
+        "redis_event_id": "fc285078-3f40-47cb-8a38-5af951dab6f2",
+        "kafka_timestamp": "2025-12-11T10:31:00.948785Z",
+        "redis_timestamp": "2025-12-11T10:30:34.512547Z",
+        "timediff_seconds": 26.436238
+      },
+      {
+        "resource_id": "server:9",
+        "kafka_event_id": "1de9a0b1-b044-4e30-a6ea-9744cdb30803",
+        "redis_event_id": "dfe00717-eefc-4f15-b337-793bf814fc41",
+        "kafka_timestamp": "2025-12-11T10:30:59.901468Z",
+        "redis_timestamp": "2025-12-11T10:30:44.087323Z",
+        "timediff_seconds": 15.814145
+      },
+      {
+        "resource_id": "switch:7",
+        "kafka_event_id": "d13bdf21-3a51-4c33-85c7-26596d1c2bae",
+        "redis_event_id": "0768414a-1f39-47a4-a05d-98ab344b58ff",
+        "kafka_timestamp": "2025-12-11T10:31:03.434343Z",
+        "redis_timestamp": "2025-12-11T10:30:49.055919Z",
+        "timediff_seconds": 14.378424
+      },
+      {
+        "resource_id": "router:11",
+        "kafka_event_id": "57a414cb-4948-4d85-825c-6594e07f82ce",
+        "redis_event_id": "3a2202b4-1d4b-41ee-8c85-68c383080143",
+        "kafka_timestamp": "2025-12-11T10:30:56.755149Z",
+        "redis_timestamp": "2025-12-11T10:30:50.617358Z",
+        "timediff_seconds": 6.137791
+      },
+      {
+        "resource_id": "switch:9",
+        "kafka_event_id": "7759fd80-a4f7-41dc-af5f-49fcd890e992",
+        "redis_event_id": "17b3103b-dd82-4c11-a245-2cca638a1da8",
+        "kafka_timestamp": "2025-12-11T10:31:02.706995Z",
+        "redis_timestamp": "2025-12-11T10:30:30.023501Z",
+        "timediff_seconds": 32.683494
+      },
+      {
+        "resource_id": "firewall:8",
+        "kafka_event_id": "5266bf14-d66b-4cb7-8386-c3d20a099a6d",
+        "redis_event_id": "e84b195c-056a-484f-94b1-4d6e1cd96e29",
+        "kafka_timestamp": "2025-12-11T10:30:59.169199Z",
+        "redis_timestamp": "2025-12-11T10:30:50.720978Z",
+        "timediff_seconds": 8.448221
+      },
+      {
+        "resource_id": "router:1",
+        "kafka_event_id": "3cbd2bcc-9dac-4037-9095-22b7a366aad7",
+        "redis_event_id": "2dfa868e-619d-479d-b9e4-17f56ff48193",
+        "kafka_timestamp": "2025-12-11T10:31:02.298871Z",
+        "redis_timestamp": "2025-12-11T10:30:39.690394Z",
+        "timediff_seconds": 22.608477
+      },
+      {
+        "resource_id": "server:11",
+        "kafka_event_id": "94c39387-728f-41a1-ac53-315d1e9a91cf",
+        "redis_event_id": "d5754075-5520-4ccd-adb1-c8af8624b9f4",
+        "kafka_timestamp": "2025-12-11T10:30:57.278410Z",
+        "redis_timestamp": "2025-12-11T10:30:37.200152Z",
+        "timediff_seconds": 20.078258
+      },
+      {
+        "resource_id": "firewall:19",
+        "kafka_event_id": "055fe1d8-e2be-4e91-92e6-92c670c1bf08",
+        "redis_event_id": "f576c30d-f37f-4cd3-ac62-b82dd12f7dcd",
+        "kafka_timestamp": "2025-12-11T10:30:57.911857Z",
+        "redis_timestamp": "2025-12-11T10:30:46.164871Z",
+        "timediff_seconds": 11.746986
+      },
+      {
+        "resource_id": "firewall:12",
+        "kafka_event_id": "2955b6fa-e12c-4536-89b3-43e7d5c7c86f",
+        "redis_event_id": "201c915e-42be-402c-9aa7-597925fa6dcd",
+        "kafka_timestamp": "2025-12-11T10:30:58.229661Z",
+        "redis_timestamp": "2025-12-11T10:30:39.175407Z",
+        "timediff_seconds": 19.054254
+      },
+      {
+        "resource_id": "firewall:7",
+        "kafka_event_id": "d3f49076-555a-4e8c-8c2d-4c7915d08b25",
+        "redis_event_id": "42b19622-1580-4469-aad4-1e5b04343bb3",
+        "kafka_timestamp": "2025-12-11T10:30:58.545159Z",
+        "redis_timestamp": "2025-12-11T10:30:33.383840Z",
+        "timediff_seconds": 25.161319
+      },
+      {
+        "resource_id": "firewall:4",
+        "kafka_event_id": "85946ad2-4da5-4dfd-91b8-301fb8978f10",
+        "redis_event_id": "b7d5d857-b87c-4740-a786-ada28eb8c858",
+        "kafka_timestamp": "2025-12-11T10:31:01.155977Z",
+        "redis_timestamp": "2025-12-11T10:30:19.754375Z",
+        "timediff_seconds": 41.401602
+      },
+      {
+        "resource_id": "router:12",
+        "kafka_event_id": "7d0e56b3-a5db-4ed1-a49d-c2cdf36ddf1d",
+        "redis_event_id": "a19f2c84-e9f2-49c4-aa0e-b957dd8b37df",
+        "kafka_timestamp": "2025-12-11T10:31:04.475914Z",
+        "redis_timestamp": "2025-12-11T10:30:32.651946Z",
+        "timediff_seconds": 31.823968
+      },
+      {
+        "resource_id": "server:8",
+        "kafka_event_id": "038fd026-f5d6-4830-bc84-3af6e80e26ca",
+        "redis_event_id": "ce3b77f8-8663-4a0e-abb3-ca4fc4f66bd4",
+        "kafka_timestamp": "2025-12-11T10:30:59.693956Z",
+        "redis_timestamp": "2025-12-11T10:30:28.340865Z",
+        "timediff_seconds": 31.353091
+      },
+      {
+        "resource_id": "firewall:2",
+        "kafka_event_id": "d9781e67-4f42-4583-bfbd-40ab86bec108",
+        "redis_event_id": "f3440faa-3ae0-4a17-b74a-59cfa2eb8a31",
+        "kafka_timestamp": "2025-12-11T10:31:04.578463Z",
+        "redis_timestamp": "2025-12-11T10:30:45.012060Z",
+        "timediff_seconds": 19.566403
+      },
+      {
+        "resource_id": "server:2",
+        "kafka_event_id": "e6b6d3ab-8708-4669-a92f-99cc36131e2c",
+        "redis_event_id": "ded126b2-4389-43b1-9cad-44c5f4f045fb",
+        "kafka_timestamp": "2025-12-11T10:31:00.635073Z",
+        "redis_timestamp": "2025-12-11T10:30:49.995207Z",
+        "timediff_seconds": 10.639866
+      },
+      {
+        "resource_id": "server:4",
+        "kafka_event_id": "1d26256e-a0f1-4db6-95da-1946fedb82cd",
+        "redis_event_id": "bb0acb05-5261-475d-a160-fb996e47b541",
+        "kafka_timestamp": "2025-12-11T10:31:00.427615Z",
+        "redis_timestamp": "2025-12-11T10:30:43.778861Z",
+        "timediff_seconds": 16.648754
+      },
+      {
+        "resource_id": "server:10",
+        "kafka_event_id": "b7926371-c38e-4c48-9a39-efe6be9b28b5",
+        "redis_event_id": "d737e1ec-9cf1-4a4b-bec0-1ad9ca48abf0",
+        "kafka_timestamp": "2025-12-11T10:31:01.569297Z",
+        "redis_timestamp": "2025-12-11T10:30:35.747390Z",
+        "timediff_seconds": 25.821907
+      },
+      {
+        "resource_id": "switch:3",
+        "kafka_event_id": "3193dfe3-9232-4baf-937f-1b29115eec4c",
+        "redis_event_id": "a0c36d98-8bb6-4c7a-9fb2-84999af02898",
+        "kafka_timestamp": "2025-12-11T10:31:01.988132Z",
+        "redis_timestamp": "2025-12-11T10:30:50.411875Z",
+        "timediff_seconds": 11.576257
+      },
+      {
+        "resource_id": "server:6",
+        "kafka_event_id": "255aa2e2-fd68-4164-bea1-d647b8ae34bf",
+        "redis_event_id": "5f28a35f-a142-498b-b07a-11990d9c9cbf",
+        "kafka_timestamp": "2025-12-11T10:31:02.196968Z",
+        "redis_timestamp": "2025-12-11T10:30:26.252598Z",
+        "timediff_seconds": 35.94437
+      },
+      {
+        "resource_id": "server:14",
+        "kafka_event_id": "a5b6e13a-bb58-41cd-8df2-b5fa73e754ce",
+        "redis_event_id": "15ab7132-71ac-40d8-9cf3-7a575bac37d5",
+        "kafka_timestamp": "2025-12-11T10:31:02.400968Z",
+        "redis_timestamp": "2025-12-11T10:30:44.496841Z",
+        "timediff_seconds": 17.904127
+      },
+      {
+        "resource_id": "firewall:1",
+        "kafka_event_id": "70aa474d-b414-422e-a4af-e62a5fbeeee4",
+        "redis_event_id": "0c5c68b2-0ae9-458f-97f0-e247db97506e",
+        "kafka_timestamp": "2025-12-11T10:31:03.123097Z",
+        "redis_timestamp": "2025-12-11T10:30:47.924105Z",
+        "timediff_seconds": 15.198992
+      },
+      {
+        "resource_id": "firewall:3",
+        "kafka_event_id": "1dd11c38-e8ac-44db-9899-298b7f90e470",
+        "redis_event_id": "b4603a61-877f-49b2-b0c3-ea6016ae1e0a",
+        "kafka_timestamp": "2025-12-11T10:31:02.916957Z",
+        "redis_timestamp": "2025-12-11T10:30:40.949996Z",
+        "timediff_seconds": 21.966961
+      },
+      {
+        "resource_id": "switch:14",
+        "kafka_event_id": "4811e2a2-46e6-4406-861b-85967c0960cd",
+        "redis_event_id": "c0101b27-d43a-48a6-a751-eca3a493f5da",
+        "kafka_timestamp": "2025-12-11T10:31:03.019317Z",
+        "redis_timestamp": "2025-12-11T10:30:44.909047Z",
+        "timediff_seconds": 18.11027
+      },
+      {
+        "resource_id": "router:18",
+        "kafka_event_id": "9eb69908-2a8e-459b-aca9-feace35b894d",
+        "redis_event_id": "424021c8-8b55-4092-9175-20097a2c4bcc",
+        "kafka_timestamp": "2025-12-11T10:31:03.226416Z",
+        "redis_timestamp": "2025-12-11T10:30:47.412993Z",
+        "timediff_seconds": 15.813423
+      },
+      {
+        "resource_id": "switch:6",
+        "kafka_event_id": "661adf68-ac41-4f36-adf5-28d0fcbd5870",
+        "redis_event_id": "9eb9d4ba-1f02-4da5-abb4-fcf09732bb2e",
+        "kafka_timestamp": "2025-12-11T10:31:03.642101Z",
+        "redis_timestamp": "2025-12-11T10:30:47.514860Z",
+        "timediff_seconds": 16.127241
+      },
+      {
+        "resource_id": "server:20",
+        "kafka_event_id": "e32b4e9e-5672-4d9a-a277-da4da219fa75",
+        "redis_event_id": "f4989c51-a7ae-43bb-aa53-ca6d0d530278",
+        "kafka_timestamp": "2025-12-11T10:31:03.852179Z",
+        "redis_timestamp": "2025-12-11T10:30:50.514360Z",
+        "timediff_seconds": 13.337819
+      },
+      {
+        "resource_id": "firewall:15",
+        "kafka_event_id": "d537632b-194a-4839-b050-f4371ff94aa4",
+        "redis_event_id": "e11013ea-f658-4a3d-8fca-74cef5165530",
+        "kafka_timestamp": "2025-12-11T10:31:04.061747Z",
+        "redis_timestamp": "2025-12-11T10:30:27.283585Z",
+        "timediff_seconds": 36.778162
+      },
+      {
+        "resource_id": "firewall:17",
+        "kafka_event_id": "db0bb62f-06ed-4a8e-8d14-ac6113439a56",
+        "redis_event_id": "96c36a3d-7adf-4fe3-a800-31791fb22e7c",
+        "kafka_timestamp": "2025-12-11T10:31:04.162742Z",
+        "redis_timestamp": "2025-12-11T10:30:48.746791Z",
+        "timediff_seconds": 15.415951
+      },
+      {
+        "resource_id": "server:19",
+        "kafka_event_id": "3de24728-af8a-4844-978b-149ea02e12c7",
+        "redis_event_id": "d736d176-7fd2-4a0a-b4a9-b5d8477052bf",
+        "kafka_timestamp": "2025-12-11T10:31:04.268780Z",
+        "redis_timestamp": "2025-12-11T10:30:49.474696Z",
+        "timediff_seconds": 14.794084
+      },
+      {
+        "resource_id": "router:3",
+        "kafka_event_id": "275a4e98-2267-41b8-83cd-cd0468d5fdbb",
+        "redis_event_id": "eaf3c050-71e5-4d32-9b56-38eaaf41979e",
+        "kafka_timestamp": "2025-12-11T10:31:04.373783Z",
+        "redis_timestamp": "2025-12-11T10:30:49.890921Z",
+        "timediff_seconds": 14.482862
+      }
+    ]
+  },
+  "status": "ISSUES-DETECTED"
+}

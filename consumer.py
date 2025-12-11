@@ -42,7 +42,7 @@ HEARTBEAT_INTERVAL = 1.0  # Update heartbeat every second
 # ------------------------------------------------------------------
 print("🚀 Consumer ready to read from Kafka - setting ready flag...")
 redis_client.set("consumer_kafka_ready", "1")
-redis_client.expire("consumer_kafka_ready", 10)  # Expire après 10s
+redis_client.expire("consumer_kafka_ready", 10)
 print("✅ Flag 'consumer_kafka_ready' set - application can start capture now")
 
 try:

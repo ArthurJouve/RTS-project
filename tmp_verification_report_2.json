@@ -1,0 +1,23 @@
+{
+  "verification_number": 2,
+  "timestamp": "2025-12-11T10:37:05.016412+00:00",
+  "duration_seconds": 1.0,
+  "window": {
+    "t0": "2025-12-11T10:37:05.016412+00:00",
+    "t1": "2025-12-11T10:37:05.516412+00:00"
+  },
+  "committed_offsets": {
+    "0": 79569
+  },
+  "metrics": {
+    "kafka_events_in_window": 0,
+    "unique_kafka_resources": 0,
+    "redis_resources": 0,
+    "correctly_synchronized": 0,
+    "missing_in_redis": 0,
+    "outdated_in_redis": 0,
+    "total_issues": 0,
+    "repaired": 0
+  },
+  "status": "NO-EVENTS"
+}
