@@ -56,10 +56,27 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # instala o plugin JSON API automaticamente
+      # install plugin automatically
       - GF_INSTALL_PLUGINS=marcusolsson-json-datasource
     networks:
       - kafka-network
+    volumes:
+      - grafana-data:/var/lib/grafana
+
+  json-server:
+    build: .
+    container_name: json-server
+    depends_on:
+      - kafka
+      - redis
+    volumes:
+      - .:/app
+    working_dir: /app
+    networks:
+      - kafka-network
+    command: python json_server.py
+    ports:
+      - "5001:5001"
 
 networks:
   kafka-network:
@@ -67,3 +84,4 @@ networks:
 
 volumes:
   redis-data:
+  grafana-data:
