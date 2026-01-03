@@ -107,27 +107,44 @@ exit
 
 ---
 
-### 5. Run the Producer and Consumer
+### 5. Run the Producer / Consumer / Application
 
 Now that Kafka is ready, you can start both Python scripts.
 
-#### 📨 Run the Consumer:
+#### Run the Consumer:
 
 ```bash
 docker exec -it rts-project-python-app python consumer.py
 ```
 
-#### 🚀 Run the Producer (in another terminal):
+#### Run the Producer (in another terminal):
 
 ```bash
 docker exec -it rts-project-python-app python producer.py
 ```
 
-Type any message in the producer terminal — it will be instantly received and printed in the consumer terminal.
+Messages will be automatically sent by the producer, using fake reports of a virtual network. 
+
+#### Run the Application (in another terminal):
+
+```bash
+docker exec -it rts-project-python-app python application.py
+```
+---
+
+### 6. Results 
+
+Each time the application restart the consumer, it produces a report of the comparison between Redis and the save of the application (more details in the project report).
+The file "current_verification_report.json" is created, with the current verification. 
+The whole history of all verifications is also created and updated each time in "verification_history.jsonl" file.
 
 ---
 
-### 6. Stop the environment
+### 7. Setup the Grafana visualisation
+
+---
+
+### 8. Stop the environment
 
 When you’re done, stop and remove all containers with:
 
@@ -140,6 +157,3 @@ If you want to clean up old images and volumes completely:
 ```bash
 docker system prune -af
 ```
-
-
-

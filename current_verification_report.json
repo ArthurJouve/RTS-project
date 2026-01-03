@@ -1,12 +1,12 @@
 {
-  "verification_number": 1,
-  "timestamp": "2026-01-02T22:35:49.383389+00:00",
-  "duration_seconds": 4.205221,
+  "verification_number": 5,
+  "timestamp": "2026-01-03T15:41:00.761919+00:00",
+  "duration_seconds": 4.183675,
   "snapshot": {
-    "timestamp": "2026-01-02T22:35:41.747993+00:00",
+    "timestamp": "2026-01-03T15:40:53.199065+00:00",
     "size": 80,
     "offsets": {
-      "0": 54358
+      "0": 56710
     }
   },
   "metrics": {
