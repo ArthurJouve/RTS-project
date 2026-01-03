@@ -3,3 +3,6 @@ redis==4.5.1
 faker==24.14.1
 flask==3.0.2
 flask-cors==4.0.0
+fastapi
+uvicorn
+requests

@@ -1,3 +1,16 @@
+"""
+Network Event Generator and Kafka Producer
+
+Generates network monitoring events (servers, routers, switches, and firewalls). Events include metrics like CPU,
+memory, latency, and packet loss with configurable alarm thresholds.
+
+Features:
+- FQDN-style resource identifiers
+- Weighted problem distribution (70% normal, 30% issues)
+- Single-metric problems per event (avoids unrealistic multi-alarm scenarios)
+- Severity-based thresholds (critical, major, minor, warning)
+"""
+
 from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient, NewTopic
 from faker import Faker
@@ -6,11 +19,13 @@ import json
 import time
 from datetime import datetime
 
+
 # Kafka configuration
 bootstrap_servers = "kafka:9092"
 topic = "test-topic"
 
-# Ensure topic exists
+
+# Ensure topic exists before producing
 admin_client = AdminClient({'bootstrap.servers': bootstrap_servers})
 topic_list = [NewTopic(topic, num_partitions=1, replication_factor=1)]
 
@@ -20,23 +35,32 @@ try:
 except Exception as e:
     print(f"ℹ️ Topic may already exist: {e}")
 
-# Create Kafka producer
+
+# Initialize Kafka producer and fake data generator
 conf = {'bootstrap.servers': bootstrap_servers}
 producer = Producer(conf)
 fake = Faker()
 
 print("🚀 Generating and sending random network events... (Press Ctrl+C to stop)\n")
 
+
 def generate_event():
-    """Generate a realistic network event with one metric problem at a time."""
+    """
+    Generate a realistic network monitoring event.
+    Most events are normal (70%), while some have problems (30%) affecting a single metric.
+    
+    Returns:
+        dict: Network event with identification, operational status, and telemetry
+    """
+    # Resource identification
     resource_type = random.choice(["server", "router", "switch", "firewall"])
     id_num = random.randint(1, 20)
     region = random.choice(["EU-West", "US-East", "EU-East"])
     
-    # Generate FQDN-style identifier
+    # Generate FQDN-style identifier (e.g., server-5.eu-west.ensea.com)
     fqdn = f"{resource_type}-{id_num}.{region.lower()}.ensea.com"
     
-    # Define alarm thresholds
+    # Alarm thresholds based on industry standards
     THRESHOLDS = {
         'cpu_critical': 90,
         'cpu_major': 80,
@@ -55,21 +79,21 @@ def generate_event():
         'packet_loss_minor': 0.15
     }
     
-    # Decide if there's a problem or not (weighted: most events are normal)
+    # Weighted decision: 70% normal events, 30% with problems
     has_problem = random.choices([True, False], weights=[30, 70], k=1)[0]
     
     if has_problem:
-        # Choose ONE metric to be problematic
+        # Select ONE metric to be problematic (realistic behavior)
         problem_metric = random.choice(['cpu', 'memory', 'latency', 'packet_loss'])
         
-        # Choose severity level (weighted: less critical alarms)
+        # Choose severity level (weighted: fewer critical alarms)
         severity = random.choices(
             ['critical_alarm', 'major_alarm', 'minor_alarm', 'warning'],
             weights=[3, 7, 20, 20],
             k=1
         )[0]
         
-        # Generate metrics based on problem
+        # Generate metrics based on the problematic metric and severity
         if problem_metric == 'cpu':
             if severity == 'critical_alarm':
                 cpu_usage = round(random.uniform(90, 99), 2)
@@ -85,7 +109,7 @@ def generate_event():
                 operational_status = 'warning'
             
             message = "CPU overload detected"
-            # Other metrics are normal
+            # Other metrics remain in normal range
             memory_usage = round(random.uniform(20, 60), 2)
             latency_ms = round(random.uniform(5, 30), 2)
             packet_loss = round(random.uniform(0.0, 0.1), 2)
@@ -105,7 +129,7 @@ def generate_event():
                 operational_status = 'warning'
             
             message = "High memory usage detected"
-            # Other metrics are normal
+            # Other metrics remain in normal range
             cpu_usage = round(random.uniform(20, 60), 2)
             latency_ms = round(random.uniform(5, 30), 2)
             packet_loss = round(random.uniform(0.0, 0.1), 2)
@@ -125,7 +149,7 @@ def generate_event():
                 operational_status = 'warning'
             
             message = "Network latency above threshold"
-            # Other metrics are normal
+            # Other metrics remain in normal range
             cpu_usage = round(random.uniform(20, 60), 2)
             memory_usage = round(random.uniform(20, 60), 2)
             packet_loss = round(random.uniform(0.0, 0.1), 2)
@@ -145,13 +169,13 @@ def generate_event():
                 operational_status = 'warning'
             
             message = "Packet loss increasing"
-            # Other metrics are normal
+            # Other metrics remain in normal range
             cpu_usage = round(random.uniform(20, 60), 2)
             memory_usage = round(random.uniform(20, 60), 2)
             latency_ms = round(random.uniform(5, 30), 2)
     
     else:
-        # No problem - all metrics are normal
+        # No problem - all metrics are in normal operational range
         operational_status = 'none'
         message = "No issues detected"
         cpu_usage = round(random.uniform(10, 50), 2)
@@ -159,22 +183,23 @@ def generate_event():
         latency_ms = round(random.uniform(1, 25), 2)
         packet_loss = round(random.uniform(0.0, 0.05), 2)
     
+    # Construct event with all fields
     event = {
         "timestamp": datetime.utcnow().isoformat() + "Z",
         "event_id": fake.uuid4(),
 
-        # --- identification fields ---
+        # Identification fields
         "resource_type": resource_type,
         "resource_id": id_num,
         "resource_fqdn": fqdn,
         
-        # --- operational data ---
+        # Operational data
         "operational_status": operational_status,
         "resource_ip": fake.ipv4_private(),
         "region": region,
         "message": message,
 
-        # --- telemetry ---
+        # Telemetry metrics
         "cpu_usage": cpu_usage,
         "memory_usage": memory_usage,
         "latency_ms": latency_ms,
@@ -182,17 +207,24 @@ def generate_event():
     }
     return event
 
-# Continuous event loop
+
+# Continuous event generation loop
 try:
     while True:
         event = generate_event()
         event_json = json.dumps(event)
+        
+        # Produce to Kafka and flush immediately (ensures delivery)
         producer.produce(topic, value=event_json.encode('utf-8'))
         producer.flush()
+        
         print(f"📤 Sent event: {event_json}")
+        
+        # Generate ~10 events per second
         time.sleep(0.1)
 
 except KeyboardInterrupt:
     print("\n🛑 Stopping producer.")
 finally:
+    # Ensure all pending messages are sent before exit
     producer.flush()

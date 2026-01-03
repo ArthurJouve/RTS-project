@@ -1,10 +1,23 @@
+"""
+Kafka Consumer with Redis Control and State Persistence
+
+This consumer reads network monitoring events from Kafka and stores them in Redis.
+
+Features:
+- Pause/resume control via Redis
+- Offset persistence for restart recovery
+- Heartbeat monitoring
+- Event processing with Redis storage
+"""
+
 from confluent_kafka import Consumer, KafkaError
 import redis
 import json
 import time
 from datetime import datetime, timezone
 
-# Kafka Configuration
+
+# Kafka consumer configuration
 conf = {
     'bootstrap.servers': 'kafka:9092',
     'group.id': 'python-group',
@@ -12,12 +25,12 @@ conf = {
     'enable.auto.commit': False
 }
 
-# Redis connection
+
+# Redis client for state management and control
 redis_client = redis.Redis(host='redis', port=6379, decode_responses=True)
 
-# ------------------------------------------------------------------
-# Increment restart count (signal to application that we restarted)
-# ------------------------------------------------------------------
+
+# Track consumer restarts
 restart_count = redis_client.get("consumer_restart_count")
 if restart_count:
     new_count = int(restart_count) + 1
@@ -27,35 +40,69 @@ else:
     redis_client.set("consumer_restart_count", 1)
     print("🆕 Consumer started for the first time (count=1)")
 
-# Initialize consumer
+
+# Initialize Kafka consumer and subscribe to topic
 consumer = Consumer(conf)
 consumer.subscribe(['test-topic'])
 print("⏲ Waiting for messages...\n")
 
-# Statistics
+
+# Processing metrics and heartbeat tracking
 events_processed = 0
 last_heartbeat_update = time.time()
 HEARTBEAT_INTERVAL = 1.0  # Update heartbeat every second
 
-# ------------------------------------------------------------------
-# NOUVEAU : Signal que le consumer est prêt à lire Kafka
-# ------------------------------------------------------------------
-print("🚀 Consumer ready to read from Kafka - setting ready flag...")
+
+# Signal readiness to application (with TTL for auto-cleanup)
 redis_client.set("consumer_kafka_ready", "1")
 redis_client.expire("consumer_kafka_ready", 10)
-print("✅ Flag 'consumer_kafka_ready' set - application can start capture now")
+print("✅ Consumer ready to read Kafka")
+
+
+# Redis-based control (no HTTP API needed)
+CONTROL_KEY = "consumer_control"
+redis_client.set(CONTROL_KEY, "run")  # Initial state: running
+
 
 try:
     while True:
+        # Check for pause command from application
+        control = redis_client.get(CONTROL_KEY)
+        
+        if control == "pause":
+            if consumer.assignment():
+                print("⏸️  Consumer PAUSED by control signal")
+                consumer.pause(consumer.assignment())
+                
+                # Save current offset for application to read
+                partitions = consumer.assignment()
+                if partitions:
+                    committed = consumer.committed(partitions, timeout=5.0)
+                    offset_info = {}
+                    for p in committed:
+                        if p and p.offset >= 0:
+                            offset_info[str(p.partition)] = p.offset
+                    redis_client.set("consumer_current_offset", json.dumps(offset_info))
+                    print(f"💾 Saved offsets: {offset_info}")
+                
+                # Wait for resume signal
+                while redis_client.get(CONTROL_KEY) == "pause":
+                    consumer.poll(1.0)  # Keep connection alive
+                    time.sleep(0.5)
+                
+                # Resume processing
+                consumer.resume(consumer.assignment())
+                print("▶️  Consumer RESUMED")
+                redis_client.set("consumer_kafka_ready", "1")
+                redis_client.expire("consumer_kafka_ready", 10)
+        
+        # Poll for new messages
         msg = consumer.poll(1.0)
         
-        # Update heartbeat periodically even when no messages
+        # Update heartbeat periodically to signal liveness
         current_time = time.time()
         if current_time - last_heartbeat_update >= HEARTBEAT_INTERVAL:
-            redis_client.set(
-                "consumer_heartbeat",
-                datetime.now(timezone.utc).isoformat()
-            )
+            redis_client.set("consumer_heartbeat", datetime.now(timezone.utc).isoformat())
             last_heartbeat_update = current_time
         
         if msg is None:
@@ -71,32 +118,24 @@ try:
             print(f"✉️  Received: {event_data}")
 
             try:
+                # Parse event and store in Redis
                 event = json.loads(event_data)
                 key = f"resource:{event['resource_type']}:{event['resource_id']}"
-
-                # Write ALL fields from the event to Redis
                 redis_client.hset(key, mapping=event)
-
                 print(f"✅ Updated Redis: {key}")
-                consumer.commit(asynchronous=False)
                 
+                # Commit offset synchronously to ensure durability
+                consumer.commit(asynchronous=False)
                 events_processed += 1
                 
-                # Update heartbeat after processing event
-                redis_client.set(
-                    "consumer_heartbeat",
-                    datetime.now(timezone.utc).isoformat()
-                )
+                # Update heartbeat after successful processing
+                redis_client.set("consumer_heartbeat", datetime.now(timezone.utc).isoformat())
                 last_heartbeat_update = current_time
 
-            except json.JSONDecodeError as e:
-                print(f"⚠️  JSON decode error: {e}")
-            except KeyError as e:
-                print(f"⚠️  Missing field in event: {e}")
-            except Exception as e:
-                print(f"❌ Redis error: {e}")
+            except (json.JSONDecodeError, KeyError) as e:
+                print(f"⚠️  Error: {e}")
 
 except KeyboardInterrupt:
-    print(f"\n🛑 Consumer stopped. Total events processed: {events_processed}")
+    print(f"\n🛑 Consumer stopped. Total events: {events_processed}")
 finally:
     consumer.close()

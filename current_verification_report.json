@@ -1,0 +1,20 @@
+{
+  "verification_number": 5,
+  "timestamp": "2026-01-03T15:41:00.761919+00:00",
+  "duration_seconds": 4.183675,
+  "snapshot": {
+    "timestamp": "2026-01-03T15:40:53.199065+00:00",
+    "size": 80,
+    "offsets": {
+      "0": 56710
+    }
+  },
+  "metrics": {
+    "correctly_synchronized": 76,
+    "missing_in_app": 0,
+    "missing_in_redis": 0,
+    "outdated_in_app": 4,
+    "total_issues": 4
+  },
+  "status": "ISSUES-DETECTED"
+}
