@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: "RTS"
+    orgId: 1
+    folder: "RTS"
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards

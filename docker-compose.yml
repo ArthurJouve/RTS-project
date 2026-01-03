@@ -56,12 +56,14 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # install plugin automatically
       - GF_INSTALL_PLUGINS=marcusolsson-json-datasource
     networks:
       - kafka-network
     volumes:
       - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+
 
   json-server:
     build: .

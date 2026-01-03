@@ -1,0 +1,386 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 0,
+  "links": [],
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Last verification status",
+      "gridPos": { "h": 8, "w": 4, "x": 0, "y": 0 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "PD5070BC1AA9F8304" },
+      "targets": [
+        {
+          "refId": "A",
+          "method": "GET",
+          "urlPath": "/latest",
+          "queryParams": "",
+          "cacheDurationSeconds": 30,
+          "fields": [{ "jsonPath": "$[*]" }]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "ISSUES-DETECTED": { "index": 1, "text": "ISSUES-DETECTED", "color": "dark-red" },
+                "ZERO-LOSS": { "index": 0, "text": "ZERO-LOSS", "color": "green" }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": 0 }, { "color": "red", "value": 1 }]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^status$/", "values": false },
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "transformations": [
+        { "id": "extractFields", "options": { "format": "json", "replace": true, "source": "*" } },
+        { "id": "sortBy", "options": { "sort": [{ "field": "timestamp", "desc": false }] } },
+        { "id": "limit", "options": { "limitField": "1" } }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Last total_issues",
+      "gridPos": { "h": 8, "w": 5, "x": 4, "y": 0 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "PD5070BC1AA9F8304" },
+      "targets": [
+        {
+          "refId": "A",
+          "method": "GET",
+          "urlPath": "/latest",
+          "queryParams": "",
+          "cacheDurationSeconds": 30,
+          "fields": [{ "jsonPath": "$[*]" }]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 1 }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^total_issues$/", "values": false },
+        "textMode": "value_and_name"
+      },
+      "transformations": [
+        { "id": "extractFields", "options": { "format": "json", "replace": true, "source": "*" } },
+        { "id": "extractFields", "options": { "format": "json", "source": "metrics" } },
+        { "id": "sortBy", "options": { "sort": [{ "field": "timestamp", "desc": false }] } },
+        { "id": "limit", "options": { "limitField": "1" } }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Last outdated_in_app",
+      "gridPos": { "h": 8, "w": 5, "x": 9, "y": 0 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "PD5070BC1AA9F8304" },
+      "targets": [
+        {
+          "refId": "A",
+          "method": "GET",
+          "urlPath": "/latest",
+          "queryParams": "",
+          "cacheDurationSeconds": 30,
+          "fields": [{ "jsonPath": "$[*]" }]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "orange", "value": 1 }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^outdated_in_app$/", "values": false },
+        "textMode": "value_and_name"
+      },
+      "transformations": [
+        { "id": "extractFields", "options": { "format": "json", "replace": true, "source": "*" } },
+        { "id": "extractFields", "options": { "format": "json", "source": "metrics" } },
+        { "id": "sortBy", "options": { "sort": [{ "field": "timestamp", "desc": false }] } },
+        { "id": "limit", "options": { "limitField": "1" } }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Last correctly_synchronized",
+      "gridPos": { "h": 8, "w": 5, "x": 14, "y": 0 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "PD5070BC1AA9F8304" },
+      "targets": [
+        {
+          "refId": "A",
+          "method": "GET",
+          "urlPath": "/latest",
+          "queryParams": "",
+          "cacheDurationSeconds": 30,
+          "fields": [{ "jsonPath": "$[*]" }]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red" }, { "color": "orange", "value": 60 }, { "color": "green", "value": 75 }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^correctly_synchronized$/", "values": false },
+        "textMode": "value_and_name"
+      },
+      "transformations": [
+        { "id": "extractFields", "options": { "format": "json", "replace": true, "source": "*" } },
+        { "id": "extractFields", "options": { "format": "json", "source": "metrics" } },
+        { "id": "sortBy", "options": { "sort": [{ "field": "timestamp", "desc": false }] } },
+        { "id": "limit", "options": { "limitField": "1" } }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Last duration_seconds",
+      "gridPos": { "h": 8, "w": 5, "x": 19, "y": 0 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "PD5070BC1AA9F8304" },
+      "targets": [
+        {
+          "refId": "A",
+          "method": "GET",
+          "urlPath": "/latest",
+          "queryParams": "",
+          "cacheDurationSeconds": 30,
+          "fields": [{ "jsonPath": "$[*]" }]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "s", "decimals": 2 },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^duration_seconds$/", "values": false },
+        "textMode": "value_and_name"
+      },
+      "transformations": [
+        { "id": "extractFields", "options": { "format": "json", "replace": true, "source": "*" } },
+        { "id": "sortBy", "options": { "sort": [{ "field": "timestamp", "desc": false }] } },
+        { "id": "limit", "options": { "limitField": "1" } }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Total issues over time",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "PD5070BC1AA9F8304" },
+      "targets": [
+        {
+          "refId": "A",
+          "method": "GET",
+          "urlPath": "/history",
+          "queryParams": "",
+          "cacheDurationSeconds": 60,
+          "fields": [{ "jsonPath": "$[*]" }]
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 0 }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "single" } },
+      "transformations": [
+        { "id": "extractFields", "options": { "format": "json", "replace": true, "source": "*" } },
+        { "id": "extractFields", "options": { "format": "json", "source": "metrics" } },
+        {
+          "id": "convertFieldType",
+          "options": { "conversions": [{ "targetField": "timestamp", "destinationType": "time" }] }
+        },
+        { "id": "prepareTimeSeries", "options": { "format": "wide" } },
+        { "id": "filterFieldsByName", "options": { "include": { "names": ["timestamp", "total_issues"] } } }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Outdated in app over time",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "PD5070BC1AA9F8304" },
+      "targets": [
+        {
+          "refId": "A",
+          "method": "GET",
+          "urlPath": "/history",
+          "queryParams": "",
+          "cacheDurationSeconds": 60,
+          "fields": [{ "jsonPath": "$[*]" }]
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 0 }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "single" } },
+      "transformations": [
+        { "id": "extractFields", "options": { "format": "json", "replace": true, "source": "*" } },
+        { "id": "extractFields", "options": { "format": "json", "source": "metrics" } },
+        {
+          "id": "convertFieldType",
+          "options": { "conversions": [{ "targetField": "timestamp", "destinationType": "time" }] }
+        },
+        { "id": "prepareTimeSeries", "options": { "format": "wide" } },
+        { "id": "filterFieldsByName", "options": { "include": { "names": ["timestamp", "outdated_in_app"] } } }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Correctly synchronized over time",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 17 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "PD5070BC1AA9F8304" },
+      "targets": [
+        {
+          "refId": "A",
+          "method": "GET",
+          "urlPath": "/history",
+          "queryParams": "",
+          "cacheDurationSeconds": 60,
+          "fields": [{ "jsonPath": "$[*]" }]
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 0 }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "single" } },
+      "transformations": [
+        { "id": "extractFields", "options": { "format": "json", "replace": true, "source": "*" } },
+        { "id": "extractFields", "options": { "format": "json", "source": "metrics" } },
+        {
+          "id": "convertFieldType",
+          "options": { "conversions": [{ "targetField": "timestamp", "destinationType": "time" }] }
+        },
+        { "id": "prepareTimeSeries", "options": { "format": "wide" } },
+        { "id": "filterFieldsByName", "options": { "include": { "names": ["timestamp", "correctly_synchronized"] } } }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Duration (seconds) over time",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 17 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "PD5070BC1AA9F8304" },
+      "targets": [
+        {
+          "refId": "A",
+          "method": "GET",
+          "urlPath": "/history",
+          "queryParams": "",
+          "cacheDurationSeconds": 60,
+          "fields": [{ "jsonPath": "$[*]" }]
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s", "decimals": 2 }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "single" } },
+      "transformations": [
+        { "id": "extractFields", "options": { "format": "json", "replace": true, "source": "*" } },
+        {
+          "id": "convertFieldType",
+          "options": { "conversions": [{ "targetField": "timestamp", "destinationType": "time" }] }
+        },
+        { "id": "prepareTimeSeries", "options": { "format": "wide" } },
+        { "id": "filterFieldsByName", "options": { "include": { "names": ["timestamp", "duration_seconds"] } } }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "table",
+      "title": "Recent verifications (latest first)",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 26 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "PD5070BC1AA9F8304" },
+      "targets": [
+        {
+          "refId": "A",
+          "method": "GET",
+          "urlPath": "/history",
+          "queryParams": "",
+          "cacheDurationSeconds": 60,
+          "fields": [{ "jsonPath": "$[*]" }]
+        }
+      ],
+      "options": { "showHeader": true },
+      "transformations": [
+        { "id": "extractFields", "options": { "format": "json", "replace": true, "source": "*" } },
+        { "id": "extractFields", "options": { "format": "json", "source": "metrics" } },
+        {
+          "id": "convertFieldType",
+          "options": { "conversions": [{ "targetField": "timestamp", "destinationType": "time" }] }
+        },
+        { "id": "sortBy", "options": { "sort": [{ "field": "timestamp", "desc": true }] } },
+        { "id": "limit", "options": { "limitField": "20" } },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "timestamp",
+                "verification_number",
+                "status",
+                "total_issues",
+                "outdated_in_app",
+                "missing_in_app",
+                "missing_in_redis",
+                "correctly_synchronized",
+                "duration_seconds"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "preload": false,
+  "schemaVersion": 42,
+  "tags": ["rts", "verification"],
+  "templating": { "list": [] },
+  "time": { "from": "now-30m", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "RTS Verification Dashboard",
+  "uid": "rts-verification-dashboard",
+  "version": 1
+}
