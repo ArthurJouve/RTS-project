@@ -1,4 +1,6 @@
-confluent-kafka==2.12.1
-redis==4.5.1
-faker==24.14.1
-flask==3.0.2
+confluent-kafka
+redis
+faker
+fastapi
+uvicorn
+requests
