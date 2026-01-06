@@ -1,8 +1,7 @@
 """
 Network Event Generator and Kafka Producer
 
-Generates network monitoring events (servers, routers, switches, and firewalls). Events include metrics like CPU,
-memory, latency, and packet loss with configurable alarm thresholds.
+Generates network monitoring events (servers, routers, switches, and firewalls).
 
 Features:
 - FQDN-style resource identifiers
@@ -83,10 +82,10 @@ def generate_event():
     has_problem = random.choices([True, False], weights=[30, 70], k=1)[0]
     
     if has_problem:
-        # Select ONE metric to be problematic (realistic behavior)
+        # Select ONE metric to be problematic
         problem_metric = random.choice(['cpu', 'memory', 'latency', 'packet_loss'])
         
-        # Choose severity level (weighted: fewer critical alarms)
+        # Choose severity level
         severity = random.choices(
             ['critical_alarm', 'major_alarm', 'minor_alarm', 'warning'],
             weights=[3, 7, 20, 20],
@@ -109,6 +108,7 @@ def generate_event():
                 operational_status = 'warning'
             
             message = "CPU overload detected"
+
             # Other metrics remain in normal range
             memory_usage = round(random.uniform(20, 60), 2)
             latency_ms = round(random.uniform(5, 30), 2)
@@ -149,12 +149,13 @@ def generate_event():
                 operational_status = 'warning'
             
             message = "Network latency above threshold"
+
             # Other metrics remain in normal range
             cpu_usage = round(random.uniform(20, 60), 2)
             memory_usage = round(random.uniform(20, 60), 2)
             packet_loss = round(random.uniform(0.0, 0.1), 2)
             
-        else:  # packet_loss
+        else:  
             if severity == 'critical_alarm':
                 packet_loss = round(random.uniform(0.5, 1.0), 2)
                 operational_status = 'critical_alarm'
@@ -169,6 +170,7 @@ def generate_event():
                 operational_status = 'warning'
             
             message = "Packet loss increasing"
+
             # Other metrics remain in normal range
             cpu_usage = round(random.uniform(20, 60), 2)
             memory_usage = round(random.uniform(20, 60), 2)
@@ -199,7 +201,7 @@ def generate_event():
         "region": region,
         "message": message,
 
-        # Telemetry metrics
+        #  Metrics
         "cpu_usage": cpu_usage,
         "memory_usage": memory_usage,
         "latency_ms": latency_ms,
@@ -214,13 +216,13 @@ try:
         event = generate_event()
         event_json = json.dumps(event)
         
-        # Produce to Kafka and flush immediately (ensures delivery)
+        # Produce to Kafka and flush immediately
         producer.produce(topic, value=event_json.encode('utf-8'))
         producer.flush()
         
         print(f"📤 Sent event: {event_json}")
         
-        # Generate ~10 events per second
+        # Number of events per second
         time.sleep(0.1)
 
 except KeyboardInterrupt:

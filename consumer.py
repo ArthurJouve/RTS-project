@@ -6,7 +6,6 @@ This consumer reads network monitoring events from Kafka and stores them in Redi
 Features:
 - Pause/resume control via Redis
 - Offset persistence for restart recovery
-- Heartbeat monitoring
 - Event processing with Redis storage
 """
 
@@ -25,44 +24,25 @@ conf = {
     'enable.auto.commit': False
 }
 
-
 # Redis client for state management and control
 redis_client = redis.Redis(host='redis', port=6379, decode_responses=True)
-
-
-# Track consumer restarts
-restart_count = redis_client.get("consumer_restart_count")
-if restart_count:
-    new_count = int(restart_count) + 1
-    redis_client.set("consumer_restart_count", new_count)
-    print(f"🔄 Consumer restarted (count={new_count})")
-else:
-    redis_client.set("consumer_restart_count", 1)
-    print("🆕 Consumer started for the first time (count=1)")
-
 
 # Initialize Kafka consumer and subscribe to topic
 consumer = Consumer(conf)
 consumer.subscribe(['test-topic'])
 print("⏲ Waiting for messages...\n")
 
-
-# Processing metrics and heartbeat tracking
+# Processing metrics
 events_processed = 0
-last_heartbeat_update = time.time()
-HEARTBEAT_INTERVAL = 1.0  # Update heartbeat every second
-
 
 # Signal readiness to application (with TTL for auto-cleanup)
 redis_client.set("consumer_kafka_ready", "1")
 redis_client.expire("consumer_kafka_ready", 10)
 print("✅ Consumer ready to read Kafka")
 
-
-# Redis-based control (no HTTP API needed)
+# Redis-based control
 CONTROL_KEY = "consumer_control"
 redis_client.set(CONTROL_KEY, "run")  # Initial state: running
-
 
 try:
     while True:
@@ -99,12 +79,6 @@ try:
         # Poll for new messages
         msg = consumer.poll(1.0)
         
-        # Update heartbeat periodically to signal liveness
-        current_time = time.time()
-        if current_time - last_heartbeat_update >= HEARTBEAT_INTERVAL:
-            redis_client.set("consumer_heartbeat", datetime.now(timezone.utc).isoformat())
-            last_heartbeat_update = current_time
-        
         if msg is None:
             continue
             
@@ -127,10 +101,6 @@ try:
                 # Commit offset synchronously to ensure durability
                 consumer.commit(asynchronous=False)
                 events_processed += 1
-                
-                # Update heartbeat after successful processing
-                redis_client.set("consumer_heartbeat", datetime.now(timezone.utc).isoformat())
-                last_heartbeat_update = current_time
 
             except (json.JSONDecodeError, KeyError) as e:
                 print(f"⚠️  Error: {e}")
@@ -139,3 +109,4 @@ except KeyboardInterrupt:
     print(f"\n🛑 Consumer stopped. Total events: {events_processed}")
 finally:
     consumer.close()
+    

@@ -21,8 +21,7 @@ class ConsumerAPIClient:
     """
     Controls the Kafka consumer via Redis signals.
     
-    Uses Redis keys to send pause/resume commands to the consumer
-    without requiring HTTP API endpoints.
+    Uses Redis keys to send pause/resume commands to the consumer.
     """
     
     def __init__(self, redis_client):
@@ -174,7 +173,7 @@ class DummyApplication:
         
         consumer.subscribe(['test-topic'])
         
-        # Wait for partition assignment (doesn't count in duration)
+        # Wait for partition assignment
         assignment = None
         for i in range(20):
             consumer.poll(0.5)
@@ -195,7 +194,7 @@ class DummyApplication:
                     offset = offset_map[partition_key]
                     consumer.seek(TopicPartition(tp.topic, tp.partition, offset))
         
-        # Read events for specified duration (timer starts NOW)
+        # Read events for specified duration
         events = []
         end_time = datetime.now(timezone.utc) + timedelta(seconds=duration)
         
@@ -275,7 +274,6 @@ class DummyApplication:
         Returns:
             dict: Verification report with metrics
         """
-        # Wait for consumer to process captured events
         time.sleep(0.5)
         
         # Scan current Redis state
@@ -330,7 +328,7 @@ class DummyApplication:
         
         total_issues = len(missing_in_app) + len(missing_in_redis) + len(outdated)
         
-        # Display results
+        # Results
         print(f"\n📊 Verification #{self.total_verifications_performed + 1}")
         print(f"✅ Correct: {correct} | ⚠️ Outdated: {len(outdated)} | ❌ Missing: {len(missing_in_app) + len(missing_in_redis)}")
         
@@ -339,7 +337,7 @@ class DummyApplication:
         elif len(outdated) <= 15 and len(missing_in_app) == 0 and len(missing_in_redis) == 0:
             print(f"✅ NEAR-PERFECT ({len(outdated)} outdated from post-capture events)")
         
-        # Increment counter
+        # Increment verification counter
         self.total_verifications_performed += 1
         
         # Create report
