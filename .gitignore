@@ -1,1 +1,9 @@
-tmp_verification_*.json*
+# runtime data
+verification_history.jsonl
+current_verification_report.json
+tmp_*.json
+tmp_*.jsonl
+
+# grafana volumes
+grafana-data/
+redis-data/

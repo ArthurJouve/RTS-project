@@ -326,11 +326,74 @@
         { "id": "filterFieldsByName", "options": { "include": { "names": ["timestamp", "duration_seconds"] } } }
       ]
     },
+  {
+    "id": 11,
+    "type": "timeseries",
+    "title": "Duration vs Redis size (and cost per item)",
+    "gridPos": { "h": 9, "w": 24, "x": 0, "y": 26 },
+    "datasource": { "type": "marcusolsson-json-datasource", "uid": "PD5070BC1AA9F8304" },
+    "targets": [
+      {
+        "refId": "A",
+        "method": "GET",
+        "urlPath": "/history",
+        "queryParams": "",
+        "cacheDurationSeconds": 60,
+        "fields": [{ "jsonPath": "$[*]" }]
+      }
+    ],
+    "fieldConfig": {
+      "defaults": {
+        "custom": {
+          "axisBorderShow": true,
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisPlacement": "auto",
+          "drawStyle": "line",
+          "fillOpacity": 6,
+          "lineInterpolation": "linear",
+          "lineWidth": 2,
+          "pointSize": 4,
+          "showPoints": "auto",
+          "spanNulls": false
+        }
+      },
+      "overrides": []
+    },
+    "options": {
+      "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+      "tooltip": { "mode": "single", "sort": "none" }
+    },
+    "transformations": [
+      { "id": "extractFields", "options": { "format": "json", "replace": true, "source": "*" } },
+      { "id": "extractFields", "options": { "format": "json", "source": "snapshot" } },
+      {
+        "id": "convertFieldType",
+        "options": { "conversions": [{ "targetField": "timestamp", "destinationType": "time" }] }
+      },
+      {
+        "id": "calculateField",
+        "options": {
+          "alias": "seconds_per_item",
+          "mode": "binary",
+          "operator": "/",
+          "left": "duration_seconds",
+          "right": "size",
+          "replaceFields": false
+        }
+      },
+      { "id": "prepareTimeSeries", "options": { "format": "wide" } },
+      {
+        "id": "filterFieldsByName",
+        "options": { "include": { "names": ["timestamp", "duration_seconds", "size", "seconds_per_item"] } }
+      }
+    ]
+  },
     {
       "id": 10,
       "type": "table",
       "title": "Recent verifications (latest first)",
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 26 },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 35 },
       "datasource": { "type": "marcusolsson-json-datasource", "uid": "PD5070BC1AA9F8304" },
       "targets": [
         {
