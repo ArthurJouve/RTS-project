@@ -108,7 +108,7 @@
     {
       "id": 3,
       "type": "stat",
-      "title": "Last outdated in app",
+      "title": "Last outdated_in_app",
       "gridPos": { "h": 8, "w": 5, "x": 9, "y": 0 },
       "datasource": { "type": "marcusolsson-json-datasource", "uid": "PD5070BC1AA9F8304" },
       "targets": [
@@ -132,7 +132,7 @@
       "options": {
         "colorMode": "value",
         "graphMode": "area",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^Outdated in app$/", "values": false },
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^outdated_in_app$/", "values": false },
         "textMode": "value_and_name"
       },
       "transformations": [
@@ -145,7 +145,7 @@
     {
       "id": 4,
       "type": "stat",
-      "title": "Last correctly synchronized",
+      "title": "Last correctly_synchronized",
       "gridPos": { "h": 8, "w": 5, "x": 14, "y": 0 },
       "datasource": { "type": "marcusolsson-json-datasource", "uid": "PD5070BC1AA9F8304" },
       "targets": [
@@ -169,7 +169,7 @@
       "options": {
         "colorMode": "value",
         "graphMode": "area",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^Correctly synchronized$/", "values": false },
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^correctly_synchronized$/", "values": false },
         "textMode": "value_and_name"
       },
       "transformations": [
@@ -182,7 +182,7 @@
     {
       "id": 5,
       "type": "stat",
-      "title": "Last Duration(seconds)",
+      "title": "Last duration_seconds",
       "gridPos": { "h": 8, "w": 5, "x": 19, "y": 0 },
       "datasource": { "type": "marcusolsson-json-datasource", "uid": "PD5070BC1AA9F8304" },
       "targets": [
@@ -202,7 +202,7 @@
       "options": {
         "colorMode": "value",
         "graphMode": "area",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^Duration(seconds)$/", "values": false },
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^duration_seconds$/", "values": false },
         "textMode": "value_and_name"
       },
       "transformations": [

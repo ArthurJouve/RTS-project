@@ -1,20 +1,20 @@
 {
-  "verification_number": 82,
-  "timestamp": "2026-01-06T10:45:08.666505+00:00",
-  "duration_seconds": 4.187768,
+  "verification_number": 3,
+  "timestamp": "2026-01-06T10:48:38.299612+00:00",
+  "duration_seconds": 4.21967,
   "snapshot": {
-    "timestamp": "2026-01-06T10:45:01.016757+00:00",
+    "timestamp": "2026-01-06T10:48:29.216216+00:00",
     "size": 80,
     "offsets": {
-      "0": 763311
+      "0": 764305
     }
   },
   "metrics": {
-    "correctly_synchronized": 80,
+    "correctly_synchronized": 76,
     "missing_in_app": 0,
     "missing_in_redis": 0,
-    "outdated_in_app": 0,
-    "total_issues": 0
+    "outdated_in_app": 4,
+    "total_issues": 4
   },
-  "status": "PERFECT"
+  "status": "ISSUES-DETECTED"
 }
